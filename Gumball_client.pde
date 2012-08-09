@@ -142,13 +142,13 @@ void askIfICanGetFeedback() {
       if (a.length() != 0) {
         JSONObject target_feedback = a.getJSONObject(0);
         String type = target_feedback.getString("feedback_type");
-        loadStrings(URL_updateFeedback + "?id=" + target_feedback.getInt("feedback_id"));
-        if (type == "positive") {
+        if (type.equals( "positive")) {
           askForCandy(mPort);
         }
         else {
           askForNegative(mPort);
         }
+        loadStrings(URL_updateFeedback + "?id=" + target_feedback.getInt("feedback_id"));
       }
     }
   }
