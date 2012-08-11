@@ -40,7 +40,7 @@ void serialEvent(Serial myPort) {
   String tmpBuffer = myPort.readStringUntil('\n');
   if (tmpBuffer != null) {
     tmpBuffer = trim(tmpBuffer);
-    println(tmpBuffer);
+    //println(tmpBuffer);
     inBuffer = tmpBuffer;
     insertDataToServer(tmpBuffer);
     askIfICanGetFeedback();
