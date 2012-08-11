@@ -33,6 +33,7 @@ void draw() {
   if (inBuffer != null) {
     text(inBuffer, 10, height/2);
   }
+  askIfICanGetFeedback();
 }
 
 void serialEvent(Serial myPort) {
@@ -43,7 +44,6 @@ void serialEvent(Serial myPort) {
     //println(tmpBuffer);
     inBuffer = tmpBuffer;
     insertDataToServer(tmpBuffer);
-    askIfICanGetFeedback();
   }
   askForSensorData(myPort);
 }
