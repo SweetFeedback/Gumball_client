@@ -1,8 +1,8 @@
 import processing.serial.*;
 import org.json.*;
 
-private static final float GLOBAL_FRAMERATE_FOR_GUMBALL_MACHINE = 5 ;
-private static final int DELAY_GIVE_FEEDBACK=20;
+private static final float GLOBAL_FRAMERATE_FOR_GUMBALL_MACHINE = 5;
+private static final int DELAY_GIVE_FEEDBACK = 20;
 
 private static int mDeviceId;
 private static Serial mPort =null;
@@ -13,52 +13,39 @@ private static String URL_getFeedback = "php/getFeedbackStatus.php";
 private static String URL_updateFeedback = "php/updateFeedback.php";
 
 private String mHostName = null;
-
-PFont f;
 String inBuffer = null;
-
 
 /***
  Main Functions
  ***/
 void setup() {
-  size(350, 400);
-  f = createFont("Arial", 20, true);
-  frameRate(GLOBAL_FRAMERATE_FOR_GUMBALL_MACHINE);
-  setting();
+  size(350, 200);
+  PFont f = createFont("Arial", 20, true);
+  textFont(f);
+  //frameRate(GLOBAL_FRAMERATE_FOR_GUMBALL_MACHINE);
+  getSettings();
   portOpen(mPortName);
-  URL = mHostName + URL;
-  URL_getFeedback = mHostName + URL_getFeedback;
-  URL_updateFeedback = mHostName + URL_updateFeedback;
 }
 
 void draw() {
   background(128);
-  textFont(f);
   text("Data from gumball Machine", 10, height/2 - 20);
   if (inBuffer != null) {
     text(inBuffer, 10, height/2);
   }
-  update();
 }
 
-void update() {
-  if (mPort != null && mPortName != "") {
-    askForSensorData(mPort);
+void serialEvent(Serial myPort) {
+  /**/
+  String tmpBuffer = myPort.readStringUntil('\n');
+  if (tmpBuffer != null) {
+    tmpBuffer = trim(tmpBuffer);
+    println(tmpBuffer);
+    inBuffer = tmpBuffer;
+    insertDataToServer(tmpBuffer);
     askIfICanGetFeedback();
   }
-  else {
-    // maybe try to open serial port.
-  }
-}
-
-void serialEvent(Serial p) {
-  String inBuffer2 = mPort.readStringUntil('\n');
-  if (inBuffer2 != null) {
-    //println(inBuffer);
-    inBuffer = inBuffer2;
-    insertDataToServer(inBuffer2);
-  }
+  askForSensorData(myPort);
 }
 
 /***
@@ -67,22 +54,23 @@ void serialEvent(Serial p) {
 private void portOpen(String name) {
   if (name != "") {
     mPort = new Serial(this, name, 9600);
-    mPort.clear();
+    // read bytes into a buffer until you get a linefeed (ASCII 10):
+    mPort.bufferUntil('\n');
   }
 }
 private void askForSensorData(Serial port) {
   if (port != null) {
-    port.write("B");
+    port.write('B');
   }
 }
 private void askForCandy(Serial port) {
   if (port != null) {
-    port.write("A");
+    port.write('A');
   }
 }
 private void askForNegative(Serial port) {
   if (port != null) {
-    port.write("C");
+    port.write('C');
   }
 }
 
@@ -102,22 +90,24 @@ private String getInsertServerDatabaseURL(String input) {
   String url = null;
   if (input != null) {
     String[] splited_data = input.split(",");
-    if (splited_data.length != 5)
-      return null;
-    int id = mDeviceId;
-    String sound = splited_data[0];
-    String light = splited_data[1];
-    String temp = splited_data[2];
-    String people = "0";
-    String window = "0";
-    if (splited_data.length > 3) {
-      people = splited_data[3];
-      window = splited_data[4];
+    if (splited_data == null || splited_data[0].equals("0")) return null;
+    String sound, light, temp, people = null, window = null;
+    switch(splited_data.length){
+      case 5:
+        people = splited_data[3];
+        window = splited_data[4];
+      case 3:
+        sound = splited_data[0];
+        light = splited_data[1];
+        temp = splited_data[2];
+        break;
+      default:
+        return null;
     }
     StringBuilder sb = new StringBuilder();
     sb.append(URL);
     sb.append("?d_id=");
-    sb.append(id);
+    sb.append(mDeviceId);
     sb.append("&s_lv=");
     sb.append(sound);
     sb.append("&l_lv=");
@@ -125,17 +115,22 @@ private String getInsertServerDatabaseURL(String input) {
     sb.append("&tem=");
     sb.append(temp);
     sb.append("&p=");
-    sb.append(people);
-    sb.append("&w=");
-    sb.append(window);
+    if(people != null) {
+      sb.append("&p=");
+      sb.append(people);
+    }
+    if(window != null) {
+      sb.append("&w=");
+      sb.append(window);
+    }
     url = sb.toString();  
-    //println(sb.toString());
+    //println(url);
   }
   return url;
 }
 void askIfICanGetFeedback() {
   try {
-    String[] feedbacks = loadStrings(URL_getFeedback + "?device_id=" + mDeviceId);      
+    String[] feedbacks = loadStrings(URL_getFeedback + "?device_id=" + mDeviceId);
     if (feedbacks.length != 0) {
       //println(feedbacks);
       JSONArray a = new JSONArray(feedbacks[0]);
@@ -153,17 +148,23 @@ void askIfICanGetFeedback() {
     }
   }
   catch(Exception e) {
+    //text("Server unavailable: ask feedback", 10, height/2 + 40);
+    println(e);
   }
 }
 
 /***
  Functions related to config file 
  ***/
-private void setting() {
+private void getSettings() {
   mPortName = getSettingFromConfigFile(dataPath("config.txt"));
   mHostName = getSettingFromConfigFile(dataPath("hostname.txt"));
   mDeviceId = Integer.parseInt(getSettingFromConfigFile(dataPath("deviceId.txt")));
+  URL = mHostName + URL;
+  URL_getFeedback = mHostName + URL_getFeedback;
+  URL_updateFeedback = mHostName + URL_updateFeedback;
 }
+
 private String getSettingFromConfigFile(String fileName) {
   String name = null;
   try {
@@ -199,4 +200,3 @@ throws UnknownHostException, SocketException {
   }
   return sb.toString();
 }
-
