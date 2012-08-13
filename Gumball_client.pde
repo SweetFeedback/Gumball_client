@@ -1,5 +1,8 @@
 import processing.serial.*;
 import org.json.*;
+import processing.video.*;
+import com.google.zxing.*;
+import java.awt.image.BufferedImage;
 
 private static final float GLOBAL_FRAMERATE_FOR_GUMBALL_MACHINE = 5;
 private static final int DELAY_GIVE_FEEDBACK = 20;
@@ -12,16 +15,28 @@ private static String URL = "php/insertSensorValueToDbNew.php";
 private static String URL_getFeedback = "php/getFeedbackStatus.php";
 private static String URL_updateFeedback = "php/updateFeedback.php";
 
+Capture cam; //Set up the camera
+com.google.zxing.Reader reader = new com.google.zxing.MultiFormatReader();
+
 private String mHostName = null;
 String inBuffer = null;
+int WIDTH = 640;
+int HEIGHT = 480;
+
+PImage cover; //This will have the cover image
+String lastISBNAcquired = ""; //This is the last ISBN we acquired
 
 /***
  Main Functions
  ***/
 void setup() {
-  size(350, 200);
-  PFont f = createFont("Arial", 20, true);
-  textFont(f);
+  size(990, 680);
+  //PFont f = createFont("Arial", 20, true);
+  //textFont(f);
+  PFont metaBold;
+  metaBold = loadFont("SansSerif-48.vlw");
+  textFont(metaBold, 36);
+  cam = new Capture(this, WIDTH, HEIGHT);
   //frameRate(GLOBAL_FRAMERATE_FOR_GUMBALL_MACHINE);
   getSettings();
   portOpen(mPortName);
@@ -34,6 +49,49 @@ void draw() {
     text(inBuffer, 10, height/2);
   }
   askIfICanGetFeedback();
+  if (cam.available() == true) {
+    cam.read(); 
+    image(cam, 0, 0);
+    try {
+      //Create a bufferedimage
+      BufferedImage buf = new BufferedImage(WIDTH, HEIGHT, 1); // last arg (1) is the same as TYPE_INT_RGB
+      buf.getGraphics().drawImage(cam.getImage(), 0, 0, null);
+      // Now test to see if it has a QR code embedded in it
+      LuminanceSource source = new BufferedImageLuminanceSource(buf);
+      BinaryBitmap bitmap = new BinaryBitmap(new HybridBinarizer(source)); 
+      Result result = reader.decode(bitmap); 
+      //Once we get the results, we can do some display
+      if (result.getText() != null) { 
+        println(result.getText());
+        ResultPoint[] points = result.getResultPoints();
+        //Draw some ellipses on at the control points
+        for (int i = 0; i < points.length; i++) {
+          fill(#ff8c00);
+          ellipse(points[i].getX(), points[i].getY(), 20, 20);
+          fill(#ff0000);
+          text(i, points[i].getX(), points[i].getY());
+        }
+        //Now fetch the book cover, if it is found
+        if (!result.getText().equals(lastISBNAcquired)) {
+          String url = "http://covers.oreilly.com/images/" + result.getText() + "/cat.gif";
+          try {
+            cover = loadImage(url, "gif");
+            lastISBNAcquired = result.getText();
+          } 
+          catch (Exception e) {
+            cover = null;
+          }
+        }
+        //Superimpose the cover on the image
+        if (cover != null) {
+          image(cover, points[1].getX(), points[1].getY());
+        }
+      }
+    } 
+    catch (Exception e) {
+      // println(e.toString());
+    }
+  }
 }
 
 void serialEvent(Serial myPort) {
