@@ -49,6 +49,9 @@ void draw() {
     text(inBuffer, 10, height/2);
   }
   askIfICanGetFeedback();
+  scanQRcode();
+}
+void scanQRcode(){
   if (cam.available() == true) {
     cam.read(); 
     image(cam, 0, 0);
@@ -62,7 +65,8 @@ void draw() {
       Result result = reader.decode(bitmap); 
       //Once we get the results, we can do some display
       if (result.getText() != null) { 
-        println(result.getText());
+        String decodeString = new String(base64.decode(result.getText().getBytes()));
+        println(decodeString);
         ResultPoint[] points = result.getResultPoints();
         //Draw some ellipses on at the control points
         for (int i = 0; i < points.length; i++) {
@@ -93,7 +97,6 @@ void draw() {
     }
   }
 }
-
 void serialEvent(Serial myPort) {
   /**/
   String tmpBuffer = myPort.readStringUntil('\n');
