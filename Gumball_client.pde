@@ -19,22 +19,36 @@ Capture cam; //Set up the camera
 com.google.zxing.Reader reader = new com.google.zxing.MultiFormatReader();
 
 private String mHostName = null;
+public static final String USERNAME = "username";
+public static final String CANDYNUM = "candynum";
+public static final String TASK = "task";
 String inBuffer = null;
 int WIDTH = 640;
 int HEIGHT = 480;
+int TEXT_HEIGHT = 60;
 
-PImage cover; //This will have the cover image
-String lastISBNAcquired = ""; //This is the last ISBN we acquired
+String lastResult = ""; //This is the last ISBN we acquired
+PFont Font01;
 
+PFont metaBold;
+int candyNum = -1;
+String username = null;
+private final static int scanQRcodeStr = 1,userinfo = 2;
+int sceneId = scanQRcodeStr;
+long recordmillis = 0;
+/* when sceneId = 1 -> QRscan
+   when sceneId = 2 -> UserInfoPage  */
 /***
  Main Functions
  ***/
+ 
 void setup() {
-  size(990, 680);
+  size(WIDTH, HEIGHT);
   //PFont f = createFont("Arial", 20, true);
   //textFont(f);
   PFont metaBold;
   metaBold = loadFont("SansSerif-48.vlw");
+  Font01 = loadFont("HarlowSolid-24.vlw");
   textFont(metaBold, 36);
   cam = new Capture(this, WIDTH, HEIGHT);
   //frameRate(GLOBAL_FRAMERATE_FOR_GUMBALL_MACHINE);
@@ -43,30 +57,101 @@ void setup() {
 }
 
 void draw() {
-  background(128);
-  text("Data from gumball Machine", 10, height/2 - 20);
+
+  /*text("Data from gumball Machine", 10, height/2 - 20);
   if (inBuffer != null) {
     text(inBuffer, 10, height/2);
+  }*/
+  switch(sceneId) {
+    case scanQRcodeStr:
+      readStringFromQRcode();
+      break;
+    case userinfo:
+      showUserInfo();
+      break;
   }
-  askIfICanGetFeedback();
-  scanQRcode();
+
 }
-void scanQRcode(){
+void setRandomColor(){
+  if(millis() - recordmillis > 500){
+    fill(random(255), random(255), random(255));
+    recordmillis = millis(); 
+  }
+}
+void showUserInfo(){
+  background(0);
+  setRandomColor();
+  textFont(Font01);
+  Font01 = loadFont("Rockwell-ExtraBold-60.vlw");
+  text("Welcome "+username, 20, 80);
+  text("you can get "+candyNum+" round(s) of candies ", 20, 130);
+}
+void readStringFromQRcode(){
+  background(250);
+  fill(0, 0, 0);  
+  text("scan the QR code here",HEIGHT/3-20, 48);
+
+  Font01 = loadFont("Rockwell-ExtraBold-60.vlw");
+  String resultStr = scanQRcode();
+//  if(resultStr!=null && resultStr!= lastResult){
+  if(resultStr!=null){
+    Base64 base64 = new Base64();
+    String decodeString = new String(base64.decode(resultStr));
+    println(decodeString);
+    JSONObject QRcodeInfo = new JSONObject(decodeString);
+    if(QRcodeInfo.has(CANDYNUM) && QRcodeInfo.has(USERNAME)){
+      candyNum = QRcodeInfo.getInt(CANDYNUM);
+      username = QRcodeInfo.getString(USERNAME);
+    }
+    else{
+      println("invalid key");
+    }
+    //sceneId = userinfo;
+    (new candyThread(candyNum, 2000)).start();
+    sceneId = userinfo;
+    
+    lastResult = resultStr;
+  }
+}
+public class candyThread extends Thread{
+  private int candyNum;
+  private long waitingTime;
+  public candyThread(int candyNum, long waitingTime){
+    this.candyNum = candyNum;
+    this.waitingTime = waitingTime;
+  }
+  public void run()
+  {
+  try{
+      for(int i = 0; i < candyNum; i++) {
+        println("candies come in three second");
+        askForCandy(mPort);
+        Thread.sleep(waitingTime);
+      }
+  }
+  catch (Exception e) {
+      e.printStackTrace();
+    }
+  
+  sceneId = scanQRcodeStr;
+  }
+
+}
+ 
+String scanQRcode(){
   if (cam.available() == true) {
     cam.read(); 
-    image(cam, 0, 0);
+    image(cam, 0, TEXT_HEIGHT);
     try {
       //Create a bufferedimage
-      BufferedImage buf = new BufferedImage(WIDTH, HEIGHT, 1); // last arg (1) is the same as TYPE_INT_RGB
+      BufferedImage buf = new BufferedImage(WIDTH, HEIGHT - TEXT_HEIGHT, 1); // last arg (1) is the same as TYPE_INT_RGB
       buf.getGraphics().drawImage(cam.getImage(), 0, 0, null);
       // Now test to see if it has a QR code embedded in it
       LuminanceSource source = new BufferedImageLuminanceSource(buf);
       BinaryBitmap bitmap = new BinaryBitmap(new HybridBinarizer(source)); 
       Result result = reader.decode(bitmap); 
       //Once we get the results, we can do some display
-      if (result.getText() != null) { 
-        String decodeString = new String(base64.decode(result.getText().getBytes()));
-        println(decodeString);
+      if (result.getText() != null) {
         ResultPoint[] points = result.getResultPoints();
         //Draw some ellipses on at the control points
         for (int i = 0; i < points.length; i++) {
@@ -75,27 +160,15 @@ void scanQRcode(){
           fill(#ff0000);
           text(i, points[i].getX(), points[i].getY());
         }
-        //Now fetch the book cover, if it is found
-        if (!result.getText().equals(lastISBNAcquired)) {
-          String url = "http://covers.oreilly.com/images/" + result.getText() + "/cat.gif";
-          try {
-            cover = loadImage(url, "gif");
-            lastISBNAcquired = result.getText();
-          } 
-          catch (Exception e) {
-            cover = null;
-          }
-        }
-        //Superimpose the cover on the image
-        if (cover != null) {
-          image(cover, points[1].getX(), points[1].getY());
-        }
+      
       }
+      return result.getText();
     } 
     catch (Exception e) {
       // println(e.toString());
     }
   }
+  return null;
 }
 void serialEvent(Serial myPort) {
   /**/
