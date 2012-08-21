@@ -48,7 +48,7 @@ void setup() {
   //textFont(f);
   PFont metaBold;
   metaBold = loadFont("SansSerif-48.vlw");
-  Font01 = loadFont("HarlowSolid-24.vlw");
+  Font01 = loadFont("SansSerif-48.vlw");
   textFont(metaBold, 36);
   cam = new Capture(this, WIDTH, HEIGHT);
   //frameRate(GLOBAL_FRAMERATE_FOR_GUMBALL_MACHINE);
@@ -82,7 +82,7 @@ void showUserInfo(){
   background(0);
   setRandomColor();
   textFont(Font01);
-  Font01 = loadFont("Rockwell-ExtraBold-60.vlw");
+  Font01 = loadFont("SansSerif-48.vlw");
   text("Welcome "+username, 20, 80);
   text("you can get "+candyNum+" round(s) of candies ", 20, 130);
 }
@@ -91,7 +91,7 @@ void readStringFromQRcode(){
   fill(0, 0, 0);  
   text("scan the QR code here",HEIGHT/3-20, 48);
 
-  Font01 = loadFont("Rockwell-ExtraBold-60.vlw");
+  Font01 = loadFont("SansSerif-48.vlw");
   String resultStr = scanQRcode();
 //  if(resultStr!=null && resultStr!= lastResult){
   if(resultStr!=null){
