@@ -19,9 +19,15 @@ String inBuffer = null;
  Main Functions
  ***/
 void setup() {
-  size(350, 200);
-  PFont f = createFont("Arial", 20, true);
-  textFont(f);
+
+  size(WIDTH, HEIGHT);
+  //PFont f = createFont("Arial", 20, true);
+  //textFont(f);
+  PFont metaBold;
+  metaBold = loadFont("SansSerif-48.vlw");
+  Font01 = loadFont("SansSerif-48.vlw");
+  textFont(metaBold, 36);
+
   //frameRate(GLOBAL_FRAMERATE_FOR_GUMBALL_MACHINE);
   getSettings();
   portOpen(mPortName);
