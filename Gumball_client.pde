@@ -47,7 +47,7 @@ void serialEvent(Serial myPort) {
   String tmpBuffer = myPort.readStringUntil('\n');
   if (tmpBuffer != null) {
     tmpBuffer = trim(tmpBuffer);
-    //println(tmpBuffer);
+    println(tmpBuffer);
     inBuffer = tmpBuffer;
     insertDataToServer(tmpBuffer);
   }
@@ -138,7 +138,7 @@ void askIfICanGetFeedback() {
   try {
     String[] feedbacks = loadStrings(URL_getFeedback + "?device_id=" + mDeviceId);
     if (feedbacks.length != 0) {
-      //println(feedbacks);
+      println(feedbacks);
       JSONArray a = new JSONArray(feedbacks[0]);
       if (a.length() != 0) {
         JSONObject target_feedback = a.getJSONObject(0);
