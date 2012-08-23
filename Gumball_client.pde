@@ -47,7 +47,7 @@ void serialEvent(Serial myPort) {
   String tmpBuffer = myPort.readStringUntil('\n');
   if (tmpBuffer != null) {
     tmpBuffer = trim(tmpBuffer);
-    println(tmpBuffer);
+    //println(tmpBuffer);
     inBuffer = tmpBuffer;
     insertDataToServer(tmpBuffer);
   }
@@ -79,15 +79,22 @@ private void askForNegative(Serial port) {
     port.write('C');
   }
 }
+private void askForSound(Serial port) {
+  if (port != null) {
+    port.write('D');
+  }
+}
 
 /***
  Functions related to communication with php 
  ***/
 private boolean insertDataToServer(String input) {
   String url = getInsertServerDatabaseURL(input);
+  //println(url);
+
   if (url != null) {
     String[] lines = loadStrings(url);
-    //println(lines);
+    println(lines);
     return true;
   }
   return false;
@@ -143,10 +150,12 @@ void askIfICanGetFeedback() {
       if (a.length() != 0) {
         JSONObject target_feedback = a.getJSONObject(0);
         String type = target_feedback.getString("feedback_type");
+        println("type:"+type);
         if (type.equals( "positive")) {
           askForCandy(mPort);
-        }
-        else {
+        }else if(type.equals("sound")){
+          askForSound(mPort);
+        }else {
           askForNegative(mPort);
         }
         loadStrings(URL_updateFeedback + "?id=" + target_feedback.getInt("feedback_id"));
