@@ -3,7 +3,7 @@ import org.json.*;
 import processing.video.*;
 import com.google.zxing.*;
 import java.awt.image.BufferedImage;
-
+import controlP5.*;
 private static final float GLOBAL_FRAMERATE_FOR_GUMBALL_MACHINE = 5;
 private static final int DELAY_GIVE_FEEDBACK = 20;
 
@@ -16,6 +16,7 @@ private static String URL_getFeedback = "php/getFeedbackStatus.php";
 private static String URL_updateFeedback = "php/updateFeedback.php";
 
 Capture cam; //Set up the camera
+
 com.google.zxing.Reader reader = new com.google.zxing.MultiFormatReader();
 
 private String mHostName = null;
@@ -23,9 +24,13 @@ public static final String USERNAME = "username";
 public static final String CANDYNUM = "candynum";
 public static final String TASK = "task";
 String inBuffer = null;
-int WIDTH = 640;
-int HEIGHT = 480;
-int TEXT_HEIGHT = 60;
+int WIDTH = 350;
+int HEIGHT = 200;
+int FULL_WIDTH = 370;
+int FULL_HEIGTH = 480;
+int TEXT_HEIGHT = HEIGHT/2+40;
+int margin_width = 10;
+int margin_height = TEXT_HEIGHT + 10;
 
 String lastResult = ""; //This is the last ISBN we acquired
 PFont Font01;
@@ -36,6 +41,10 @@ String username = null;
 private final static int scanQRcodeStr = 1,userinfo = 2;
 int sceneId = scanQRcodeStr;
 long recordmillis = 0;
+boolean isScannerEnabled = false;
+
+ControlP5 cp5;
+CheckBox checkbox;
 /* when sceneId = 1 -> QRscan
    when sceneId = 2 -> UserInfoPage  */
 /***
@@ -43,34 +52,68 @@ long recordmillis = 0;
  ***/
  
 void setup() {
-  size(WIDTH, HEIGHT);
-  //PFont f = createFont("Arial", 20, true);
-  //textFont(f);
-  PFont metaBold;
-  metaBold = loadFont("SansSerif-48.vlw");
-  Font01 = loadFont("SansSerif-48.vlw");
-  textFont(metaBold, 36);
+  size(WIDTH, HEIGHT);  
+  PFont f = createFont("Arial", 20, true);
+  textFont(f);
   cam = new Capture(this, WIDTH, HEIGHT);
   //frameRate(GLOBAL_FRAMERATE_FOR_GUMBALL_MACHINE);
   getSettings();
   portOpen(mPortName);
+  setupControlElement();
 }
 
 void draw() {
-
-  /*text("Data from gumball Machine", 10, height/2 - 20);
+  background(128);
+  text("Data from gumball Machine", 10, HEIGHT/4 - 20);
   if (inBuffer != null) {
-    text(inBuffer, 10, height/2);
-  }*/
-  switch(sceneId) {
-    case scanQRcodeStr:
-      readStringFromQRcode();
-      break;
-    case userinfo:
-      showUserInfo();
-      break;
+    text(inBuffer, 10, HEIGHT/4);
   }
+  if(isScannerEnabled)  {
+    switch(sceneId) {
+      case scanQRcodeStr:
+        readStringFromQRcode();
+        break;
+      case userinfo:
+        showUserInfo();
+        break;
+    }
+  }
+
   askIfICanGetFeedback(); //basic function
+}
+
+void setupControlElement(){
+  cp5 = new ControlP5(this);
+  checkbox = cp5.addCheckBox("checkBox").setPosition(10, HEIGHT/2+10)
+  .setColorForeground(color(120))
+  .setColorActive(color(255))
+  .setColorLabel(color(255))
+  .setSize(10, 10)
+  .addItem("enable QR code scanner", 0);
+}
+
+void controlEvent(ControlEvent theEvent) {
+  if (theEvent.isFrom(checkbox)) {
+
+    print("got an event from "+checkbox.getName()+"\t\n");
+    // checkbox uses arrayValue to store the state of 
+    // individual checkbox-items. usage:
+    println(checkbox.getArrayValue());
+    int col = 0;
+    for (int i=0;i<checkbox.getArrayValue().length;i++) {
+      if((int)checkbox.getArrayValue()[i] == 1) {
+        isScannerEnabled = true;
+        size(FULL_WIDTH, FULL_HEIGTH);
+        frame.setSize(FULL_WIDTH,FULL_HEIGTH); 
+      }
+      else{
+        isScannerEnabled = false;
+        size(WIDTH,HEIGHT);
+        frame.setSize(WIDTH,HEIGHT); 
+      }
+    }
+    println();    
+  }
 }
 void setRandomColor(){
   if(millis() - recordmillis > 500){
@@ -79,17 +122,14 @@ void setRandomColor(){
   }
 }
 void showUserInfo(){
-  background(0);
   setRandomColor();
   textFont(Font01);
   Font01 = loadFont("SansSerif-48.vlw");
-  text("Welcome "+username, 20, 80);
-  text("you can get "+candyNum+" round(s) of candies ", 20, 130);
+  text("Welcome "+username, margin_width, TEXT_HEIGHT);
+  text("you can get "+candyNum+" round(s) of candies ", margin_width, 130);
 }
 void readStringFromQRcode(){
-  background(250);
-  fill(0, 0, 0);  
-  text("scan the QR code here",HEIGHT/3-20, 48);
+  text("scan the QR code here",margin_width, TEXT_HEIGHT);
 
   Font01 = loadFont("SansSerif-48.vlw");
   String resultStr = scanQRcode();
@@ -113,6 +153,7 @@ void readStringFromQRcode(){
     lastResult = resultStr;
   }
 }
+
 public class candyThread extends Thread{
   private int candyNum;
   private long waitingTime;
@@ -137,14 +178,15 @@ public class candyThread extends Thread{
   }
 
 }
- 
+
 String scanQRcode(){
   if (cam.available() == true) {
     cam.read(); 
-    image(cam, 0, TEXT_HEIGHT);
+
+    image(cam, margin_width, margin_height);
     try {
       //Create a bufferedimage
-      BufferedImage buf = new BufferedImage(WIDTH, HEIGHT - TEXT_HEIGHT, 1); // last arg (1) is the same as TYPE_INT_RGB
+      BufferedImage buf = new BufferedImage(width, height, 1); // last arg (1) is the same as TYPE_INT_RGB
       buf.getGraphics().drawImage(cam.getImage(), 0, 0, null);
       // Now test to see if it has a QR code embedded in it
       LuminanceSource source = new BufferedImageLuminanceSource(buf);
@@ -156,9 +198,9 @@ String scanQRcode(){
         //Draw some ellipses on at the control points
         for (int i = 0; i < points.length; i++) {
           fill(#ff8c00);
-          ellipse(points[i].getX(), points[i].getY(), 20, 20);
+          ellipse(points[i].getX() + margin_width, points[i].getY() + margin_height, 20, 20);
           fill(#ff0000);
-          text(i, points[i].getX(), points[i].getY());
+          text(i, points[i].getX() + margin_width, points[i].getY() + margin_height);
         }
       
       }
@@ -170,6 +212,7 @@ String scanQRcode(){
   }
   return null;
 }
+
 void serialEvent(Serial myPort) {
   /**/
   String tmpBuffer = myPort.readStringUntil('\n');
