@@ -66,8 +66,10 @@ void setup() {
 void draw() {
   background(128);
   text("Data from gumball Machine", 10, HEIGHT/4 - 20);
+  text("S(dB), L, T, P, W", 10, HEIGHT/4+10);
+  
   if (inBuffer != null) {
-    text(inBuffer, 10, HEIGHT/4);
+    text(inBuffer, 10, HEIGHT/4+30);
   }
   if(isScannerEnabled)  {
     switch(sceneId) {
