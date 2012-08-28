@@ -53,6 +53,7 @@ CheckBox checkbox;
  
 void setup() {
   size(WIDTH, HEIGHT);  
+
   PFont f = createFont("Arial", 20, true);
   textFont(f);
   cam = new Capture(this, WIDTH, HEIGHT);
@@ -123,15 +124,15 @@ void setRandomColor(){
 }
 void showUserInfo(){
   setRandomColor();
-  textFont(Font01);
-  Font01 = loadFont("SansSerif-48.vlw");
+/*  textFont(Font01);
+  Font01 = loadFont("SansSerif-48.vlw");*/
   text("Welcome "+username, margin_width, TEXT_HEIGHT);
-  text("you can get "+candyNum+" round(s) of candies ", margin_width, 130);
+  text("you can get "+candyNum+" round(s) of candies ", margin_width, TEXT_HEIGHT+20);
 }
 void readStringFromQRcode(){
   text("scan the QR code here",margin_width, TEXT_HEIGHT);
 
-  Font01 = loadFont("SansSerif-48.vlw");
+ /* Font01 = loadFont("SansSerif-48.vlw");*/
   String resultStr = scanQRcode();
 //  if(resultStr!=null && resultStr!= lastResult){
   if(resultStr!=null){
