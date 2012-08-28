@@ -15,6 +15,17 @@ private static String URL_updateFeedback = "php/updateFeedback.php";
 private String mHostName = null;
 String inBuffer = null;
 
+int WIDTH = 350;
+int HEIGHT = 200;
+int FULL_WIDTH = 370;
+int FULL_HEIGTH = 480;
+int TEXT_HEIGHT = HEIGHT/2+40;
+int margin_width = 10;
+int margin_height = TEXT_HEIGHT + 10;
+
+PFont Font01;
+PFont metaBold;
+
 /***
  Main Functions
  ***/
@@ -23,10 +34,10 @@ void setup() {
   size(WIDTH, HEIGHT);
   //PFont f = createFont("Arial", 20, true);
   //textFont(f);
-  PFont metaBold;
+  //PFont metaBold;
   metaBold = loadFont("SansSerif-48.vlw");
   Font01 = loadFont("SansSerif-48.vlw");
-  textFont(metaBold, 36);
+  textFont(metaBold, 24);
 
   //frameRate(GLOBAL_FRAMERATE_FOR_GUMBALL_MACHINE);
   getSettings();
@@ -35,9 +46,11 @@ void setup() {
 
 void draw() {
   background(128);
-  text("Data from gumball Machine", 10, height/2 - 20);
+  
+  text("Data from gumball Machine", 10, HEIGHT/4 - 20);
+  text("S(dB), L, T, P, W", 10, HEIGHT/4+10);
   if (inBuffer != null) {
-    text(inBuffer, 10, height/2);
+    text(inBuffer, 8, height/2);
   }
   askIfICanGetFeedback();
 }
