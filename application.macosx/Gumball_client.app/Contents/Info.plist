@@ -50,7 +50,7 @@
 	<string>ppc</string>
       </array>
       <key>ClassPath</key>
-      <string>$JAVAROOT/Gumball_client.jar:$JAVAROOT/core.jar:$JAVAROOT/RXTXcomm.jar:$JAVAROOT/serial.jar:$JAVAROOT/json4processing.jar</string>
+      <string>$JAVAROOT/Gumball_client.jar:$JAVAROOT/core.jar:$JAVAROOT/RXTXcomm.jar:$JAVAROOT/serial.jar:$JAVAROOT/json4processing.jar:$JAVAROOT/controlP5.jar</string>
 
       <!-- http://developer.apple.com/releasenotes/Java/java141/system_properties/chapter_4_section_1.html#//apple_ref/doc/uid/TP30000285 -->
       <key>Properties</key>

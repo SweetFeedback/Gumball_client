@@ -1,4 +1,4 @@
 #!/bin/sh
 
 APPDIR=$(dirname "$0")
-java  -Djava.library.path="$APPDIR" -cp "$APPDIR/lib/Gumball_client.jar:$APPDIR/lib/core.jar:$APPDIR/lib/RXTXcomm.jar:$APPDIR/lib/serial.jar:$APPDIR/lib/json4processing.jar" Gumball_client
+java -Dgnu.io.rxtx.SerialPorts=`head -n 1 ./data/config.txt`  -Djava.library.path="$APPDIR" -cp "$APPDIR/lib/Gumball_client.jar:$APPDIR/lib/core.jar:$APPDIR/lib/RXTXcomm.jar:$APPDIR/lib/serial.jar:$APPDIR/lib/json4processing.jar:$APPDIR/lib/controlP5.jar" Gumball_client

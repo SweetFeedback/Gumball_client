@@ -1,5 +1,6 @@
 import processing.serial.*;
 import org.json.*;
+import controlP5.*;
 
 private static final float GLOBAL_FRAMERATE_FOR_GUMBALL_MACHINE = 5;
 private static final int DELAY_GIVE_FEEDBACK = 20;
@@ -13,27 +14,74 @@ private static String URL_getFeedback = "php/getFeedbackStatus.php";
 private static String URL_updateFeedback = "php/updateFeedback.php";
 
 private String mHostName = null;
-String inBuffer = null;
+private String inBuffer = null;
+private boolean[] candySound = new boolean[]{true, false};
+private boolean silentFlag = false;
+private int bootError = 0;
+
+int WIDTH = 360;
+int HEIGHT = 200;
+int FULL_WIDTH = 370;
+int FULL_HEIGTH = 480;
+int TEXT_HEIGHT = HEIGHT/2+40;
+int margin_width = 10;
+int margin_height = TEXT_HEIGHT + 10;
+
+PFont Font01;
+PFont metaBold;
+
+ControlP5 cp5;
+CheckBox checkbox1, checkbox2;
 
 /***
  Main Functions
  ***/
 void setup() {
-  size(350, 200);
-  PFont f = createFont("Arial", 20, true);
-  textFont(f);
+
+  size(WIDTH, HEIGHT);
+  //PFont f = createFont("Arial", 20, true);
+  //textFont(f);
+  //PFont metaBold;
+  metaBold = loadFont("SansSerif-48.vlw");
+  Font01 = loadFont("SansSerif-48.vlw");
+  textFont(metaBold, 24);
+
   //frameRate(GLOBAL_FRAMERATE_FOR_GUMBALL_MACHINE);
   getSettings();
   portOpen(mPortName);
+  if(mPort == null|| mPort.output == null){
+    bootError = 1;
+  }
+  setupControlElement();
+  if(bootError == 0 && loadStrings(mHostName) == null){
+    bootError = 2;
+  }
 }
 
 void draw() {
   background(128);
-  text("Data from gumball Machine", 10, height/2 - 20);
-  if (inBuffer != null) {
-    text(inBuffer, 10, height/2);
+  if(bootError > 0){
+    switch(bootError){
+      case 1:
+        text("Cannot open port: ", 10, HEIGHT/4 - 20);
+        text(mPortName, 10, HEIGHT/4 + 10);
+        break;
+      case 2:
+        text("Cannot connect server: ", 10, HEIGHT/4 - 20);
+        text(mHostName, 10, HEIGHT/4 + 10, 300, 24);
+        break;
+      default:
+        text("Unknown boot error", 10, HEIGHT/4 - 20);
+        break;
+    }
+  }else{
+    text("Sensor Data:", 10, HEIGHT/4 - 20);
+    text("S(dB), Li, T, IR, Win", 10, HEIGHT/4+10);
+    if (inBuffer != null) {
+      text(inBuffer, 8, height/2 - 10);      
+    }
+    if(!silentFlag) askIfICanGetFeedback();
   }
-  askIfICanGetFeedback();
 }
 
 void serialEvent(Serial myPort) {
@@ -45,7 +93,94 @@ void serialEvent(Serial myPort) {
     inBuffer = tmpBuffer;
     insertDataToServer(tmpBuffer);
   }
-  askForSensorData(myPort);
+  if(bootError == 0) {
+    askForSensorData(myPort);
+  }else{
+    myPort.write('z');
+    //println("only establish contact");
+  }
+}
+
+void dispose(){
+  mPort.clear();
+  mPort.stop();
+  super.dispose();
+}
+
+void setupControlElement(){
+  cp5 = new ControlP5(this);
+  /*checkbox1 = cp5.addCheckBox("checkBox1").setPosition(10, HEIGHT/2+20)
+  .setColorForeground(color(120))
+  .setColorActive(color(255))
+  .setColorLabel(color(255))
+  .setSize(10, 10)
+  .addItem("No candy", 0);*/
+  int h = HEIGHT/2 + 10;
+  checkbox1 = cp5.addCheckBox("checkBox1").setPosition(10, h)
+                .setColorForeground(color(120))
+                .setColorActive(color(255))
+                .setColorLabel(color(255))
+                .setSize(20, 20)
+                .setItemsPerRow(2)
+                .setSpacingColumn(70)
+                .setSpacingRow(20)
+                .addItem("Candy", 0)
+                .addItem("Sound", 0)
+                ;
+  checkbox2 = cp5.addCheckBox("checkBox2").setPosition(10, h+30)
+                .setColorForeground(color(120))
+                .setColorActive(color(255))
+                .setColorLabel(color(255))
+                .setSize(20, 20)
+                .setSpacingColumn(70)
+                .setSpacingRow(20)
+                .addItem("Silence", 0)
+                ;
+  checkbox1.activate("Candy");
+  cp5.addButton("GiveCandy")
+     .setPosition(10,h + 60)
+     .setSize(50,20)
+     ;
+  cp5.addButton("PosSound")
+     .setPosition(80,h + 60)
+     .setSize(48,20)
+     ;
+  cp5.addButton("NegSound")
+     .setPosition(150,h + 60)
+     .setSize(48,20)
+     ;
+  cp5.addButton("ServerState")
+     .setPosition(220,h + 60)
+     .setSize(60,20)
+     ;
+}
+
+void controlEvent(ControlEvent theEvent) {
+  CheckBox checkbox;
+  if (theEvent.isFrom(checkbox1)) {
+    checkbox = checkbox1;
+    if(silentFlag){
+      checkbox2.deactivateAll();
+      silentFlag = false;
+    }
+    //print("got an event from "+checkbox.getName()+"\t\n");
+    for (int i=0;i<checkbox.getArrayValue().length;i++) {
+      if(checkbox.getArrayValue()[i] > 0){
+        candySound[i] = true;
+      }else{
+        candySound[i] = false;
+      }
+    }
+  } else if (theEvent.isFrom(checkbox2)) {
+    checkbox = checkbox2;
+    //print("got an event from "+checkbox.getName()+"\t\n");
+    if (checkbox.getArrayValue()[0] > 0){
+      if(!silentFlag){
+        checkbox1.deactivateAll();
+        silentFlag = true;
+      }
+    }
+  }
 }
 
 /***
@@ -54,13 +189,9 @@ void serialEvent(Serial myPort) {
 private void portOpen(String name) {
   if (name != "") {
     mPort = new Serial(this, name, 9600);
+    mPort.clear();
     // read bytes into a buffer until you get a linefeed (ASCII 10):
     mPort.bufferUntil('\n');
-  }
-}
-private void askForSensorData(Serial port) {
-  if (port != null) {
-    port.write('B');
   }
 }
 private void askForCandy(Serial port) {
@@ -68,17 +199,39 @@ private void askForCandy(Serial port) {
     port.write('A');
   }
 }
+private void askForSensorData(Serial port) {
+  if (port != null) {
+    port.write('B');
+  }
+}
 private void askForNegative(Serial port) {
   if (port != null) {
     port.write('C');
   }
 }
+private void askForSound(Serial port) {
+  if (port != null) {
+    port.write('D');
+  }
+}
+void GiveCandy(int theValue) {
+  askForCandy(mPort);
+}
+void PosSound(int theValue) {
+  askForSound(mPort);
+}
+void NegSound(int theValue) {
+  askForNegative(mPort);
+}
+void ServerState(int theValue) {
 
+}
 /***
  Functions related to communication with php 
  ***/
 private boolean insertDataToServer(String input) {
   String url = getInsertServerDatabaseURL(input);
+  //println(url);
   if (url != null) {
     String[] lines = loadStrings(url);
     //println(lines);
@@ -137,11 +290,14 @@ void askIfICanGetFeedback() {
       if (a.length() != 0) {
         JSONObject target_feedback = a.getJSONObject(0);
         String type = target_feedback.getString("feedback_type");
+        //println("type:"+type);
         if (type.equals( "positive")) {
-          askForCandy(mPort);
-        }
-        else {
-          askForNegative(mPort);
+          if(candySound[0]) askForCandy(mPort);
+          if(candySound[1]) askForSound(mPort);
+        }else if(type.equals("sound")){
+          if(candySound[1]) askForSound(mPort);
+        }else {
+          if(candySound[1]) askForNegative(mPort);
         }
         loadStrings(URL_updateFeedback + "?id=" + target_feedback.getInt("feedback_id"));
       }
@@ -149,7 +305,7 @@ void askIfICanGetFeedback() {
   }
   catch(Exception e) {
     //text("Server unavailable: ask feedback", 10, height/2 + 40);
-    println(e);
+    //println(e);
   }
 }
 
@@ -180,8 +336,7 @@ private String getSettingFromConfigFile(String fileName) {
 /***
  Functions for tool
  ***/
-public static String getMacAddress(String ipAddr)
-throws UnknownHostException, SocketException {
+public static String getMacAddress(String ipAddr) throws UnknownHostException, SocketException {
   InetAddress addr = InetAddress.getByName(ipAddr);
   NetworkInterface ni = NetworkInterface.getByInetAddress(addr);
   if (ni == null)
