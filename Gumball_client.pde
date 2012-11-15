@@ -1,7 +1,7 @@
 import processing.serial.*;
 import org.json.*;
 import controlP5.*;
-
+import ddf.minim.*;
 private static final float GLOBAL_FRAMERATE_FOR_GUMBALL_MACHINE = 5;
 private static final int DELAY_GIVE_FEEDBACK = 20;
 
@@ -29,7 +29,8 @@ int margin_height = TEXT_HEIGHT + 10;
 
 PFont Font01;
 PFont metaBold;
-
+Minim minim;
+AudioPlayer player;
 ControlP5 cp5;
 CheckBox checkbox1, checkbox2;
 
@@ -56,6 +57,11 @@ void setup() {
   if(bootError == 0 && loadStrings(mHostName) == null){
     bootError = 2;
   }
+  
+  minim = new Minim (this);
+  player = minim.loadFile ("../audio/wind.wav");
+
+  
 }
 
 void draw() {
@@ -83,7 +89,13 @@ void draw() {
     if(!silentFlag) askIfICanGetFeedback();
   }
 }
-
+void stop()
+{
+  // always close Minim audio classes when you are done with them
+  player.pause();
+  minim.stop();
+  super.stop();
+}
 void serialEvent(Serial myPort) {
   /**/
   String tmpBuffer = myPort.readStringUntil('\n');
@@ -272,15 +284,36 @@ private String getInsertServerDatabaseURL(String input) {
       sb.append("&p=");
       sb.append(people);
     }
+    boolean windowOpen=false;
     if(window != null) {
       sb.append("&w=");
       sb.append(window);
+
+      windowOpen = window.equals("1");
+
+      utterWindSound(windowOpen);
     }
     url = sb.toString();  
     //println(url);
   }
   return url;
 }
+void utterWindSound(boolean windowOpen){
+  float currentVolume = player.getGain();
+  print(""+currentVolume+"\n");
+  if(windowOpen){
+    if(!player.isPlaying())
+      player.loop();
+    player.shiftGain(currentVolume, 20, 1000);
+  }
+    
+   else if(!windowOpen && player.isPlaying()){
+    player.shiftGain(currentVolume, -20, 1000);
+    if(currentVolume <= -20.0)
+      player.pause();
+  }
+}
+
 void askIfICanGetFeedback() {
   try {
     String[] feedbacks = loadStrings(URL_getFeedback + "?device_id=" + mDeviceId);
