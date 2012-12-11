@@ -12,10 +12,16 @@ h2. Installation steps.
 
 2. Modify the config file setting under the directory *"data/"*
 * Rename the file *"config.txt.template"* to *"config.txt"*
-With content @[The port name of your gumball machine device]@
+With content @[The port name of your gumball machine device]@ 
+For Windows, you can check the port name of your device from *"settings->device manager"*
+[screenshot]
+For MaxOS, you can check the port name of your device by command,
+@ls /dev/tty.usbmodem*@ 
+For Linux, you can check the port name of your device by command, 
+@dmesg | grep "/dev"@ by unplugging the device and plug it again.
 * Rename the file *"deviceId.txt.template"* to *"deviceId.txt"*
 With content @[The device id you specify]@
 * Rename the file *"hostname.txt.template"* to *"hostname.txt"*
 With content @http://disa.csie.ntu.edu.tw/~blt/sweetreward/@
 
-3. Open the application under the directory that is suitable for your system e.g. for linux 32-bit user, you choose the application under the directory *"application.linux32"*
+3. Open the application under the directory that is suitable for your system *e.g.* for linux 32-bit user, you choose the application under the directory *"application.linux32"*
