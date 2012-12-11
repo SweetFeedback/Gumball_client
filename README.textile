@@ -1,0 +1,13 @@
+Gumball_client
+==============
+
+processing.org code 
+
+h2. Installation steps.
+
+1. Download the client application code directory. Two ways to install these packages:
+* Option 1. Pull the code if you know how to use "git":http://git-scm.com/downloads
+@git pull https://github.com/louisccc/GumballClient.git@
+* Option 2. Download the whole "*master.zip*":https://github.com/louisccc/Gumball_client/archive/master.zip
+
+2. Modify the config file setting under the directory *"data/"*
