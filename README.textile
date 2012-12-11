@@ -11,3 +11,11 @@ h2. Installation steps.
 * Option 2. Download the whole "*master.zip*":https://github.com/louisccc/Gumball_client/archive/master.zip
 
 2. Modify the config file setting under the directory *"data/"*
+* Rename the file *"config.txt.template"* to *"config.txt"*
+With content @[The port name of your gumball machine device]@
+* Rename the file *"deviceId.txt.template"* to *"deviceId.txt"*
+With content @[The device id you specify]@
+* Rename the file *"hostname.txt.template"* to *"hostname.txt"*
+With content @http://disa.csie.ntu.edu.tw/~blt/sweetreward/@
+
+3. Open the application under the directory that is suitable for your system e.g. for linux 32-bit user, you choose the application under the directory *"application.linux32"*
