@@ -21,9 +21,11 @@ int FULL_HEIGTH = 480;
 int TEXT_HEIGHT = HEIGHT/2+40;
 int margin_width = 10;
 int margin_height = TEXT_HEIGHT + 10;
-int[] windowIdList;
+int[] windowIdList=null;
 PFont Font01;
 PFont metaBold;
+Minim minim;
+AudioPlayer player;
 /***
  Main Functions
  ***/
@@ -39,15 +41,9 @@ void setup() {
 
   //frameRate(GLOBAL_FRAMERATE_FOR_GUMBALL_MACHINE);
   getSettings();
-  boolean is_exception_rasied = false;
-  try{
-    portOpen(mPortName);
-    is_exception_rasied = false;
-  }catch(Exception e){
-    is_exception_rasied = true;
-  }
-
-  println("port_in_use exception:"+is_exception_rasied);
+  portOpen(mPortName);
+  askForWindowId(mPort);
+  
   if(mPort == null|| mPort.output == null){
     bootError = 1;
   }
@@ -56,6 +52,8 @@ void setup() {
     bootError = 2;
   }
   
+  minim = new Minim (this);
+  player = minim.loadFile ("../audio/wind.wav");
 
   
 }
@@ -92,19 +90,32 @@ void serialEvent(Serial myPort) {
   String tmpBuffer = myPort.readStringUntil('\n');
   if (tmpBuffer != null) {
     tmpBuffer = trim(tmpBuffer);
-    //println(tmpBuffer);
     inBuffer = tmpBuffer;
-    String[] splited_data = tmpBuffer.split(",");
-    if (splited_data != null && !(splited_data[0].equals("-1"))){
+    String[] splited_str = tmpBuffer.split(":");
+    if(splited_str.length != 2)
+      return; //ignore if the data format is not correct
+    String dataProperty = splited_str[0];
+    
+    //println(dataProperty);
+    if (dataProperty.equals("data")){
+        String[] splited_data = splited_str[1].split(",");
+        int openWindowCnt = 0;
         for(int i = 0; i < splited_data.length; i++){
           int newWindowState = Integer.parseInt(splited_data[i]);
+          if(newWindowState == 1)
+            openWindowCnt+=1;
           if(newWindowState != prevWindowStates[i]){
             prevWindowStates[i] = newWindowState; 
             insertWindowDataToServer(String.valueOf(windowIdList[i]), newWindowState);
           }
+          utterWindSound(openWindowCnt>0);
           
         }      
 
+    }
+    else if(dataProperty.equals("windowId")){
+      //println(splited_str[1]);
+      setWindowIdList(splited_str[1]);
     }
     //assert(splited_data.length == windowIdList.length);
     
@@ -131,7 +142,7 @@ void dispose(){
 /***
  Functions related to port 
  ***/
-private void portOpen(String name) throws gnu.io.PortInUseException{
+private void portOpen(String name){
   if (name != "") {
     mPort = new Serial(this, name, 9600);
     mPort.clear();
@@ -153,6 +164,11 @@ private void  setWindowIdList(String windowDeviceIdStr){
 private void askForWindowStateData(Serial port) {
   if (port != null) {
     port.write('B');
+  }
+}
+private void askForWindowId(Serial port) {
+  if (port != null) {
+    port.write('A');
   }
 }
 void ServerState(int theValue) {
@@ -192,8 +208,6 @@ private String getWindowInsertionURL(String window_id, int windowState){
 private void getSettings() {
   mPortName = getSettingFromConfigFile(dataPath("config.txt"));
   mHostName = getSettingFromConfigFile(dataPath("hostname.txt"));
-  mWindowDeviceId = getSettingFromConfigFile(dataPath("deviceId.txt"));
-  setWindowIdList(mWindowDeviceId);
   URL = mHostName + URL;
   URL_updateWindowState = mHostName + URL_updateWindowState;
 }
@@ -209,7 +223,22 @@ private String getSettingFromConfigFile(String fileName) {
   //println("config port is " + name);
   return name;
 }
-
+void utterWindSound(boolean windowOpen){
+  float currentVolume = player.getGain();
+  //print(""+currentVolume+"\n");
+  if(windowOpen){
+    if(!player.isPlaying())
+      player.loop();
+    player.shiftGain(currentVolume, 20, 1000);
+  }
+    
+   else if(!windowOpen && player.isPlaying()){
+    player.shiftGain(currentVolume, -20, 1000);
+    if(currentVolume <= -16.0)
+      player.pause();
+  }
+  println(currentVolume);
+}
 /***
  Functions for tool
  ***/
