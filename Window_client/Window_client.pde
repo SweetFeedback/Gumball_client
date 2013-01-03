@@ -3,6 +3,8 @@ import org.json.*;
 import controlP5.*;
 import ddf.minim.*;
 import java.net.*;
+import java.util.Date;
+import java.text.*;
 
 private static String mWindowDeviceId = null;
 private static Serial mPort =null;
@@ -147,7 +149,7 @@ boolean isWindowOpenTimeMatched(){
   String strDateFormat = "HH";
   SimpleDateFormat sdf = new SimpleDateFormat(strDateFormat);
   int hour = Integer.parseInt(sdf.format(date));
-  println(hour);
+  //println(hour);
   if(hour>=8 && hour<=19)
     return false;
   return true;
@@ -192,7 +194,7 @@ void ServerState(int theValue) {
  ***/
 private boolean insertWindowDataToServer(String window_id, int windowState){
   String url = getWindowInsertionURL(window_id, windowState);
-  println(url);
+  //println(url);
   if (url != null) {
     String[] lines = loadStrings(url);
     //println(lines);
