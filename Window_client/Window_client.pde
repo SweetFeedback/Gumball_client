@@ -15,6 +15,7 @@ private static String URL_updateWindowState = "php/insertExtendedWindowState.php
 private String mHostName = null;
 private String inBuffer = null;
 private int bootError = 0;
+private boolean enableTimePolicy = false;
 private int[] prevWindowStates;
 int WIDTH = 360;
 int HEIGHT = 200;
@@ -55,7 +56,7 @@ void setup() {
   }
   
   minim = new Minim (this);
-  player = minim.loadFile ("../audio/wind.wav");
+  player = minim.loadFile (dataPath("wind.wav"));
 
   
 }
@@ -241,7 +242,7 @@ private String getSettingFromConfigFile(String fileName) {
 void utterWindSound(boolean windowOpen){
   float currentVolume = player.getGain();
   //print(""+currentVolume+"\n");
-  if(isWindowOpenTimeMatched() == true){
+  if(enableTimePolicy && isWindowOpenTimeMatched() == true){
      player.pause();
   }
   else{
