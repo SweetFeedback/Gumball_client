@@ -98,6 +98,10 @@ void serialEvent(Serial myPort) {
     
     //println(dataProperty);
     if (dataProperty.equals("data")){
+        if(windowIdList==null){
+          askForWindowId(myPort);
+          return;
+        }
         String[] splited_data = splited_str[1].split(",");
         int openWindowCnt = 0;
         for(int i = 0; i < splited_data.length; i++){
@@ -138,7 +142,16 @@ void dispose(){
   super.dispose();
 }
 
-
+boolean isWindowOpenTimeMatched(){
+  Date date = new Date();
+  String strDateFormat = "HH";
+  SimpleDateFormat sdf = new SimpleDateFormat(strDateFormat);
+  int hour = Integer.parseInt(sdf.format(date));
+  println(hour);
+  if(hour>=8 && hour<=19)
+    return false;
+  return true;
+}
 /***
  Functions related to port 
  ***/
@@ -226,18 +239,23 @@ private String getSettingFromConfigFile(String fileName) {
 void utterWindSound(boolean windowOpen){
   float currentVolume = player.getGain();
   //print(""+currentVolume+"\n");
-  if(windowOpen){
-    if(!player.isPlaying())
-      player.loop();
-    player.shiftGain(currentVolume, 20, 1000);
+  if(isWindowOpenTimeMatched() == true){
+     player.pause();
   }
-    
-   else if(!windowOpen && player.isPlaying()){
-    player.shiftGain(currentVolume, -20, 1000);
-    if(currentVolume <= -16.0)
-      player.pause();
+  else{
+    if(windowOpen){
+      if(!player.isPlaying())
+        player.loop();
+      player.shiftGain(currentVolume, 20, 1000);
+    }
+      
+     else if(!windowOpen && player.isPlaying()){
+      player.shiftGain(currentVolume, -20, 1000);
+      if(currentVolume <= -16.0)
+        player.pause();
+    }
+    //println(currentVolume);
   }
-  println(currentVolume);
 }
 /***
  Functions for tool
