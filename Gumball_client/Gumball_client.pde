@@ -2,14 +2,14 @@ import processing.serial.*;
 import org.json.*;
 import controlP5.*;
 import ddf.minim.*;
-private static final float GLOBAL_FRAMERATE_FOR_GUMBALL_MACHINE = 5;
+private static final float GLOBAL_FRAMERATE_FOR_GUMBALL_MACHINE = 60;
 private static final int DELAY_GIVE_FEEDBACK = 20;
 
 private static int mDeviceId;
 private static Serial mPort =null;
 private static String mPortName = null;
 
-private static String URL = "php/insertSensorValueToDbNew.php";
+private static String URL = "window_log/insert";
 private static String URL_getFeedback = "php/getFeedbackStatus.php";
 private static String URL_updateFeedback = "php/updateFeedback.php";
 
@@ -17,7 +17,7 @@ private String mHostName = null;
 private String inBuffer = null;
 private boolean[] candySound = new boolean[]{true, false};
 private boolean silentFlag = false;
-private int bootError = 0;
+private int bootError = 0; // 0: ok, 1: open port error, 2: server string error
 
 int WIDTH = 360;
 int HEIGHT = 200;
@@ -26,6 +26,7 @@ int FULL_HEIGTH = 480;
 int TEXT_HEIGHT = HEIGHT/2+40;
 int margin_width = 10;
 int margin_height = TEXT_HEIGHT + 10;
+int cnt = 0;
 
 PFont Font01;
 PFont metaBold;
@@ -52,16 +53,16 @@ void setup() {
   portOpen(mPortName);
   if(mPort == null|| mPort.output == null){
     bootError = 1;
+    println("Port Unavailable");
   }
   setupControlElement();
   if(bootError == 0 && loadStrings(mHostName) == null){
     bootError = 2;
+    println("Server Unavailable");
   }
   
   minim = new Minim (this);
   player = minim.loadFile ("../audio/wind.wav");
-
-  
 }
 
 void draw() {
@@ -244,7 +245,7 @@ void ServerState(int theValue) {
 private boolean insertDataToServer(String input) {
   String url = getInsertServerDatabaseURL(input);
   //println(url);
-  if (url != null) {
+  if (url != null && bootError == 0) {
     String[] lines = loadStrings(url);
     //println(lines);
     return true;
@@ -271,6 +272,12 @@ private String getInsertServerDatabaseURL(String input) {
     }
     StringBuilder sb = new StringBuilder();
     sb.append(URL);
+    sb.append("?location_id=3&window_id=");
+    sb.append(cnt);
+    cnt++;
+    sb.append("&state=1");
+
+    /*
     sb.append("?d_id=");
     sb.append(mDeviceId);
     sb.append("&s_lv=");
@@ -280,6 +287,7 @@ private String getInsertServerDatabaseURL(String input) {
     sb.append("&tem=");
     sb.append(temp);
     sb.append("&p=");
+
     if(people != null) {
       sb.append("&p=");
       sb.append(people);
@@ -293,7 +301,9 @@ private String getInsertServerDatabaseURL(String input) {
 
       utterWindSound(windowOpen);
     }
+        */
     url = sb.toString();  
+    println(url);
     //println(url);
   }
   return url;
@@ -315,6 +325,8 @@ void utterWindSound(boolean windowOpen){
 }
 
 void askIfICanGetFeedback() {
+  return;
+  /*
   try {
     String[] feedbacks = loadStrings(URL_getFeedback + "?device_id=" + mDeviceId);
     if (feedbacks.length != 0) {
@@ -340,6 +352,7 @@ void askIfICanGetFeedback() {
     //text("Server unavailable: ask feedback", 10, height/2 + 40);
     //println(e);
   }
+  */
 }
 
 /***
