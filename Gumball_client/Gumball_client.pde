@@ -10,8 +10,8 @@ private static Serial mPort =null;
 private static String mPortName = null;
 
 private static String URL = "window_log/insert";
-private static String URL_getFeedback = "php/getFeedbackStatus.php";
-private static String URL_updateFeedback = "php/updateFeedback.php";
+private static String URL_getFeedback = "get_feedback";
+private static String URL_updateFeedback = "update_feedback";
 
 private String mHostName = null;
 private String inBuffer = null;
@@ -325,17 +325,15 @@ void utterWindSound(boolean windowOpen){
 }
 
 void askIfICanGetFeedback() {
-  return;
-  /*
   try {
     String[] feedbacks = loadStrings(URL_getFeedback + "?device_id=" + mDeviceId);
-    if (feedbacks.length != 0) {
-      //println(feedbacks);
+    if (feedbacks.length > 0) {
+      println(feedbacks);
       JSONArray a = new JSONArray(feedbacks[0]);
-      if (a.length() != 0) {
+      if (a.length() > 0) {
         JSONObject target_feedback = a.getJSONObject(0);
         String type = target_feedback.getString("feedback_type");
-        //println("type:"+type);
+        println("type:"+type);
         if (type.equals( "positive")) {
           if(candySound[0]) askForCandy(mPort);
           if(candySound[1]) askForSound(mPort);
@@ -344,15 +342,14 @@ void askIfICanGetFeedback() {
         }else {
           if(candySound[1]) askForNegative(mPort);
         }
-        loadStrings(URL_updateFeedback + "?id=" + target_feedback.getInt("feedback_id"));
+        loadStrings(URL_updateFeedback + "?feedback_id=" + target_feedback.getInt("feedback_id"));
       }
     }
   }
   catch(Exception e) {
-    //text("Server unavailable: ask feedback", 10, height/2 + 40);
-    //println(e);
+    text("Server unavailable: ask feedback", 10, height/2 + 40);
+    println(e);
   }
-  */
 }
 
 /***
