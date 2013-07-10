@@ -5,6 +5,7 @@ import ddf.minim.*;
 private static final float GLOBAL_FRAMERATE_FOR_GUMBALL_MACHINE = 60;
 private static final int DELAY_GIVE_FEEDBACK = 20;
 
+private static boolean DEBUG = true;
 private static int mDeviceId;
 private static Serial mPort =null;
 private static String mPortName = null;
@@ -303,8 +304,9 @@ private String getInsertServerDatabaseURL(String input) {
     }
         */
     url = sb.toString();  
-    println(url);
-    //println(url);
+    if(DEBUG) {
+      println(url);
+    }
   }
   return url;
 }
@@ -328,12 +330,16 @@ void askIfICanGetFeedback() {
   try {
     String[] feedbacks = loadStrings(URL_getFeedback + "?device_id=" + mDeviceId);
     if (feedbacks.length > 0) {
-      println(feedbacks);
+      if(DEBUG) {
+        println(feedbacks);
+      }
       JSONArray a = new JSONArray(feedbacks[0]);
       if (a.length() > 0) {
         JSONObject target_feedback = a.getJSONObject(0);
         String type = target_feedback.getString("feedback_type");
-        println("type:"+type);
+        if(DEBUG) {
+          println("type:"+type);
+        }
         if (type.equals( "positive")) {
           if(candySound[0]) askForCandy(mPort);
           if(candySound[1]) askForSound(mPort);
