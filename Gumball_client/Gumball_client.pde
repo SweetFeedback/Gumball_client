@@ -2,6 +2,8 @@ import processing.serial.*;
 import org.json.*;
 import controlP5.*;
 import ddf.minim.*;
+import guru.ttslib.*;
+
 private static final float GLOBAL_FRAMERATE_FOR_GUMBALL_MACHINE = 60;
 private static final int DELAY_GIVE_FEEDBACK = 20;
 
@@ -36,6 +38,8 @@ AudioPlayer player;
 ControlP5 cp5;
 CheckBox checkbox1, checkbox2;
 
+private TTS tts; // Text to speech object
+
 /***
  Main Functions
  ***/
@@ -64,6 +68,9 @@ void setup() {
   
   minim = new Minim (this);
   player = minim.loadFile ("../audio/wind.wav");
+  
+  tts = new TTS();
+  
 }
 
 void draw() {
@@ -95,6 +102,8 @@ void draw() {
       askIfICanGetFeedback();
     }
   }
+  
+  speak("Hi Louis!");
 
 }
 void stop()
@@ -415,4 +424,11 @@ public static String getMacAddress(String ipAddr) throws UnknownHostException, S
     sb.append(String.format("%02x", b));
   }
   return sb.toString();
+}
+
+/***
+ Text to Speech
+ ***/
+private void speak(String content) {
+  tts.speak(content);
 }
