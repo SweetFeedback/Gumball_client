@@ -5,7 +5,7 @@ import ddf.minim.*;
 private static final float GLOBAL_FRAMERATE_FOR_GUMBALL_MACHINE = 60;
 private static final int DELAY_GIVE_FEEDBACK = 20;
 
-private static boolean DEBUG = true;
+private static boolean DEBUG = false;
 private static int mDeviceId;
 private static Serial mPort =null;
 private static String mPortName = null;
@@ -48,7 +48,7 @@ void setup() {
   metaBold = loadFont("SansSerif-48.vlw");
   Font01 = loadFont("SansSerif-48.vlw");
   textFont(metaBold, 24);
-
+  frameRate(1);
   //frameRate(GLOBAL_FRAMERATE_FOR_GUMBALL_MACHINE);
   getSettings();
   portOpen(mPortName);
@@ -88,8 +88,14 @@ void draw() {
     if (inBuffer != null) {
       text(inBuffer, 8, height/2 - 10);      
     }
-    if(!silentFlag) askIfICanGetFeedback();
+    if(!silentFlag) {
+      if(DEBUG) {
+        println("Ask get feedback");
+      }
+      askIfICanGetFeedback();
+    }
   }
+
 }
 void stop()
 {
@@ -107,6 +113,7 @@ void serialEvent(Serial myPort) {
     inBuffer = tmpBuffer;
     insertDataToServer(tmpBuffer);
   }
+  myPort.clear();
   if(bootError == 0) {
     askForSensorData(myPort);
   }else{
@@ -305,7 +312,7 @@ private String getInsertServerDatabaseURL(String input) {
         */
     url = sb.toString();  
     if(DEBUG) {
-      println(url);
+      //println(url);
     }
   }
   return url;
@@ -329,18 +336,22 @@ void utterWindSound(boolean windowOpen){
 void askIfICanGetFeedback() {
   try {
     String[] feedbacks = loadStrings(URL_getFeedback + "?device_id=" + mDeviceId);
+    
     if (feedbacks.length > 0) {
+      String feedbackString = join(feedbacks, "");
       if(DEBUG) {
-        println(feedbacks);
+        println(feedbackString);
       }
-      JSONArray a = new JSONArray(feedbacks[0]);
+      JSONObject resultObject = new JSONObject(feedbackString);
+      JSONArray a = resultObject.getJSONArray("data");
+      
       if (a.length() > 0) {
         JSONObject target_feedback = a.getJSONObject(0);
         String type = target_feedback.getString("feedback_type");
-        if(DEBUG) {
-          println("type:"+type);
-        }
         if (type.equals( "positive")) {
+          if(DEBUG) {
+            println("give candy");
+          }
           if(candySound[0]) askForCandy(mPort);
           if(candySound[1]) askForSound(mPort);
         }else if(type.equals("sound")){
@@ -349,6 +360,7 @@ void askIfICanGetFeedback() {
           if(candySound[1]) askForNegative(mPort);
         }
         loadStrings(URL_updateFeedback + "?feedback_id=" + target_feedback.getInt("feedback_id"));
+        delay(1000);
       }
     }
   }
