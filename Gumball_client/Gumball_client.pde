@@ -7,7 +7,7 @@ import guru.ttslib.*;
 private static final float GLOBAL_FRAMERATE_FOR_GUMBALL_MACHINE = 60;
 private static final int DELAY_GIVE_FEEDBACK = 20;
 
-private static boolean DEBUG = false;
+private static boolean DEBUG = true;
 private static int mDeviceId;
 private static Serial mPort =null;
 private static String mPortName = null;
@@ -96,14 +96,11 @@ void draw() {
       text(inBuffer, 8, height/2 - 10);      
     }
     if(!silentFlag) {
-      if(DEBUG) {
-        println("Ask get feedback");
-      }
       askIfICanGetFeedback();
     }
   }
   
-  speak("Hi Louis!");
+  //speak("Hi Louis!");
 
 }
 void stop()
@@ -291,7 +288,7 @@ private String getInsertServerDatabaseURL(String input) {
     sb.append(URL);
     sb.append("?location_id=3&window_id=");
     sb.append(cnt);
-    cnt++;
+    //cnt++;
     sb.append("&state=1");
 
     /*
@@ -348,24 +345,27 @@ void askIfICanGetFeedback() {
     
     if (feedbacks.length > 0) {
       String feedbackString = join(feedbacks, "");
-      if(DEBUG) {
-        println(feedbackString);
-      }
       JSONObject resultObject = new JSONObject(feedbackString);
       JSONArray a = resultObject.getJSONArray("data");
       
       if (a.length() > 0) {
         JSONObject target_feedback = a.getJSONObject(0);
+        if(DEBUG) {
+          println(target_feedback);
+        }
         String type = target_feedback.getString("feedback_type");
+        String description = target_feedback.getString("feedback_description");
         if (type.equals( "positive")) {
           if(DEBUG) {
             println("give candy");
           }
           if(candySound[0]) askForCandy(mPort);
           if(candySound[1]) askForSound(mPort);
+          speak(description);
         }else if(type.equals("sound")){
           if(candySound[1]) askForSound(mPort);
         }else {
+          println("ask negative");
           if(candySound[1]) askForNegative(mPort);
         }
         loadStrings(URL_updateFeedback + "?feedback_id=" + target_feedback.getInt("feedback_id"));
