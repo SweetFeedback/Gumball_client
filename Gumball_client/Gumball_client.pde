@@ -154,6 +154,7 @@ void draw() {
 //    }
 //  }
 
+
 }
 void stop()
 {
@@ -377,6 +378,7 @@ private String getInsertServerDatabaseURL(String input) {
     StringBuilder sb = new StringBuilder();
     sb.append(URL);
     sb.append("?device_id=");
+    
     sb.append(mDeviceId);
     sb.append("&sound_level=");
     sb.append(sound);
@@ -416,11 +418,12 @@ void askIfICanGetFeedback() {
     }
     if (feedbacks.length > 0) {
       String feedbackString = join(feedbacks, "");
-      org.json.JSONObject resultObject = new org.json.JSONObject(feedbackString);
-      org.json.JSONArray a = resultObject.getJSONArray("data");
+
+      JSONObject resultObject = new JSONObject(feedbackString);
+      JSONArray a = resultObject.getJSONArray("data");
       
       if (a.length() > 0) {
-        org.json.JSONObject target_feedback = a.getJSONObject(0);
+        JSONObject target_feedback = a.getJSONObject(0);
         if(DEBUG) {
           println(target_feedback);
         }
@@ -434,6 +437,7 @@ void askIfICanGetFeedback() {
           askForCandy(mPort);
           //if(candySound[1])
           askForSound(mPort);
+
           speak(description);
         }else if(type.equals("sound")){
           if(candySound[1]) askForSound(mPort);
@@ -442,6 +446,7 @@ void askIfICanGetFeedback() {
           //if(candySound[1])
           askForNegative(mPort);
           speak("ummm");
+
         }
         loadStrings(URL_updateFeedback + "?feedback_id=" + target_feedback.getInt("feedback_id"));
         delay(1000);

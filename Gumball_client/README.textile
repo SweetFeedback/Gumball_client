@@ -10,6 +10,12 @@ h2. Installation steps.
 @git pull https://github.com/louisccc/GumballClient.git@
 * Option 2. Download the whole "*master.zip*":https://github.com/louisccc/Gumball_client/archive/master.zip
 
+2. Copy the libraries directory into your sketch folder.
+a. org.json
+b. controlP5
+c. ttslib (http://www.local-guru.net/blog/pages/ttslib)
+If you are using Mac, you will be /Documents/Processing/libraries
+
 2. Modify the config file setting under the directory *"data/"*
 * Rename the file *"config.txt.template"* to *"config.txt"*
 With content @[The port name of your gumball machine device]@ 
