@@ -2,15 +2,19 @@ import processing.serial.*;
 import org.json.*;
 import controlP5.*;
 import ddf.minim.*;
+import guru.ttslib.*;
+import bluetoothDesktop.*;
+
 private static final float GLOBAL_FRAMERATE_FOR_GUMBALL_MACHINE = 60;
 private static final int DELAY_GIVE_FEEDBACK = 20;
 
-private static boolean DEBUG = false;
+private static boolean DEBUG = true;
 private static int mDeviceId;
 private static Serial mPort =null;
 private static String mPortName = null;
 
-private static String URL = "window_log/insert";
+private static String URL = "sensor_log/insert";
+private static String URL_window = "window_log/insert";
 private static String URL_getFeedback = "get_feedback";
 private static String URL_updateFeedback = "update_feedback";
 
@@ -35,6 +39,13 @@ Minim minim;
 AudioPlayer player;
 ControlP5 cp5;
 CheckBox checkbox1, checkbox2;
+
+//Bluetooth bt;
+int bluetoothTimer = 0;
+Device[] devices = new Device[0];
+
+
+private TTS tts; // Text to speech object
 
 /***
  Main Functions
@@ -64,6 +75,22 @@ void setup() {
   
   minim = new Minim (this);
   player = minim.loadFile ("../audio/wind.wav");
+  
+  // Text to speech
+  tts = new TTS();
+  
+  
+  // bluetooth init
+//  try {
+//    bt = new Bluetooth(this, Bluetooth.UUID_RFCOMM); // RFCOMM
+//  
+//    // Start a Service
+//    bt.start("simpleService");
+//  } 
+//  catch (RuntimeException e) {
+//    println("bluetooth off?");
+//    println(e);
+//  }
 }
 
 void draw() {
@@ -89,12 +116,43 @@ void draw() {
       text(inBuffer, 8, height/2 - 10);      
     }
     if(!silentFlag) {
-      if(DEBUG) {
-        println("Ask get feedback");
-      }
       askIfICanGetFeedback();
     }
   }
+  String tmpBuffer = null;
+  while(mPort.available() > 0){
+    tmpBuffer = mPort.readStringUntil('\n');
+    if (tmpBuffer != null) {
+    }
+    else{
+      break;
+    }
+    
+  }
+  if (tmpBuffer != null) {
+      tmpBuffer = trim(tmpBuffer);
+      //println(tmpBuffer);
+      inBuffer = tmpBuffer;
+      insertDataToServer(tmpBuffer);
+    }
+  if(bootError == 0) {
+      askForSensorData(mPort);
+    }else{
+      mPort.write('z');
+      //println("only establish contact");
+    }
+  
+//  bluetoothTimer++;
+//  if(bluetoothTimer == 5) {
+//    bluetoothTimer = 0;
+//    bt.discover();
+//    if(devices.length > 0) {
+//      println(devices[0].name);
+//      if(devices[0].name != "(Unknown)") {
+//        speak(devices[0].name);
+//      }
+//    }
+//  }
 
 }
 void stop()
@@ -104,23 +162,23 @@ void stop()
   minim.stop();
   super.stop();
 }
-void serialEvent(Serial myPort) {
-  /**/
-  String tmpBuffer = myPort.readStringUntil('\n');
-  if (tmpBuffer != null) {
-    tmpBuffer = trim(tmpBuffer);
-    //println(tmpBuffer);
-    inBuffer = tmpBuffer;
-    insertDataToServer(tmpBuffer);
-  }
-  myPort.clear();
-  if(bootError == 0) {
-    askForSensorData(myPort);
-  }else{
-    myPort.write('z');
-    //println("only establish contact");
-  }
-}
+//void serialEvent(Serial myPort) {
+//  /**/
+//  String tmpBuffer = myPort.readStringUntil('\n');
+//  if (tmpBuffer != null) {
+//    tmpBuffer = trim(tmpBuffer);
+//    //println(tmpBuffer);
+//    inBuffer = tmpBuffer;
+//    insertDataToServer(tmpBuffer);
+//  }
+//  myPort.clear();
+//  if(bootError == 0) {
+//    askForSensorData(myPort);
+//  }else{
+//    myPort.write('z');
+//    //println("only establish contact");
+//  }
+//}
 
 void dispose(){
   mPort.clear();
@@ -252,16 +310,54 @@ void ServerState(int theValue) {
  ***/
 private boolean insertDataToServer(String input) {
   String url = getInsertServerDatabaseURL(input);
+  String url_window = getInsertWindowDatabaseURL(input);
   //println(url);
-  if (url != null && bootError == 0) {
+  if (url_window != null && bootError == 0) {
     String[] lines = loadStrings(url);
+    String[] lines_window = loadStrings(url_window);
     //println(lines);
     return true;
   }
   return false;
 }
+private String getInsertWindowDatabaseURL(String input) {
+  String url = null; 
+  println(input);
+  if(input != null) {
+    String[] splited_data = input.split(",");
+    if (splited_data == null || splited_data[0].equals("0")) return null;
+    String sound, light, temp, people = null, window = null;
+    switch(splited_data.length){
+      case 5:
+        people = splited_data[3];
+        window = splited_data[4];
+      case 3:
+        sound = splited_data[0];
+        light = splited_data[1];
+        temp = splited_data[2];
+        break;
+      default:
+        return null;
+    }
+    StringBuilder sb = new StringBuilder();
+    sb.append(URL_window);
+    sb.append("?location_id=3");
+    sb.append("&device_id=");
+    sb.append(mDeviceId);
+    //cnt++;
+    sb.append("&state=");
+    sb.append(window);
+    url = sb.toString();  
+    if(DEBUG) {
+      //println(url);
+    }
+  }
+  println(url);
+  return url;
+}
 private String getInsertServerDatabaseURL(String input) {
   String url = null;
+  println(input);
   if (input != null) {
     String[] splited_data = input.split(",");
     if (splited_data == null || splited_data[0].equals("0")) return null;
@@ -280,36 +376,15 @@ private String getInsertServerDatabaseURL(String input) {
     }
     StringBuilder sb = new StringBuilder();
     sb.append(URL);
-    sb.append("?location_id=3&window_id=");
-    sb.append(cnt);
-    cnt++;
-    sb.append("&state=1");
-
-    /*
-    sb.append("?d_id=");
+    sb.append("?device_id=");
     sb.append(mDeviceId);
-    sb.append("&s_lv=");
+    sb.append("&sound_level=");
     sb.append(sound);
-    sb.append("&l_lv=");
-    sb.append(light);
-    sb.append("&tem=");
+    sb.append("&temperature=");
     sb.append(temp);
-    sb.append("&p=");
+    sb.append("&light_level=");
+    sb.append(light);
 
-    if(people != null) {
-      sb.append("&p=");
-      sb.append(people);
-    }
-    boolean windowOpen=false;
-    if(window != null) {
-      sb.append("&w=");
-      sb.append(window);
-
-      windowOpen = window.equals("1");
-
-      utterWindSound(windowOpen);
-    }
-        */
     url = sb.toString();  
     if(DEBUG) {
       //println(url);
@@ -336,28 +411,37 @@ void utterWindSound(boolean windowOpen){
 void askIfICanGetFeedback() {
   try {
     String[] feedbacks = loadStrings(URL_getFeedback + "?device_id=" + mDeviceId);
-    
+    if(DEBUG) {
+      //println(feedbacks);
+    }
     if (feedbacks.length > 0) {
       String feedbackString = join(feedbacks, "");
-      if(DEBUG) {
-        println(feedbackString);
-      }
-      JSONObject resultObject = new JSONObject(feedbackString);
-      JSONArray a = resultObject.getJSONArray("data");
+      org.json.JSONObject resultObject = new org.json.JSONObject(feedbackString);
+      org.json.JSONArray a = resultObject.getJSONArray("data");
       
       if (a.length() > 0) {
-        JSONObject target_feedback = a.getJSONObject(0);
+        org.json.JSONObject target_feedback = a.getJSONObject(0);
+        if(DEBUG) {
+          println(target_feedback);
+        }
         String type = target_feedback.getString("feedback_type");
+        String description = target_feedback.getString("feedback_description");
         if (type.equals( "positive")) {
           if(DEBUG) {
             println("give candy");
           }
-          if(candySound[0]) askForCandy(mPort);
-          if(candySound[1]) askForSound(mPort);
+          //if(candySound[0])
+          askForCandy(mPort);
+          //if(candySound[1])
+          askForSound(mPort);
+          speak(description);
         }else if(type.equals("sound")){
           if(candySound[1]) askForSound(mPort);
         }else {
-          if(candySound[1]) askForNegative(mPort);
+          println("ask negative");
+          //if(candySound[1])
+          askForNegative(mPort);
+          speak("ummm");
         }
         loadStrings(URL_updateFeedback + "?feedback_id=" + target_feedback.getInt("feedback_id"));
         delay(1000);
@@ -378,6 +462,7 @@ private void getSettings() {
   mHostName = getSettingFromConfigFile(dataPath("hostname.txt"));
   mDeviceId = Integer.parseInt(getSettingFromConfigFile(dataPath("deviceId.txt")));
   URL = mHostName + URL;
+  URL_window = mHostName + URL_window;
   URL_getFeedback = mHostName + URL_getFeedback;
   URL_updateFeedback = mHostName + URL_updateFeedback;
 }
@@ -415,4 +500,35 @@ public static String getMacAddress(String ipAddr) throws UnknownHostException, S
     sb.append(String.format("%02x", b));
   }
   return sb.toString();
+}
+
+/***
+ Bluetooth
+ ***/
+private void scanBluetooth() {
+  
+}
+
+
+void deviceDiscoverEvent(Device d) {
+  devices = (Device[])append(devices, d);
+  println("found: " + d.name + " " + d.address);
+}
+
+void deviceDiscoveryCompleteEvent(Device[] d) {
+  print("bluetooth discover completed: ");
+  devices = d;
+  if(d.length == 0) {
+    println("found nothing");
+  } else if(d.length > 0) {
+    println(devices[0].name + " " + devices[0].address);
+  }
+}
+ 
+ 
+/***
+ Text to Speech
+ ***/
+private void speak(String content) {
+  tts.speak(content);
 }
