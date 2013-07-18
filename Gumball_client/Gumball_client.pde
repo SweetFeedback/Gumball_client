@@ -154,7 +154,6 @@ void draw() {
 //    }
 //  }
 
-
 }
 void stop()
 {
@@ -315,9 +314,10 @@ private boolean insertDataToServer(String input) {
   //println(url);
   if (url_window != null && bootError == 0) {
     String[] lines = loadStrings(url);
-    String[] lines_window = loadStrings(url_window);
     //println(lines);
-    return true;
+  }
+  if (url_window != null && bootError == 0) {
+    String[] lines_window = loadStrings(url_window);
   }
   return false;
 }
@@ -378,7 +378,6 @@ private String getInsertServerDatabaseURL(String input) {
     StringBuilder sb = new StringBuilder();
     sb.append(URL);
     sb.append("?device_id=");
-    
     sb.append(mDeviceId);
     sb.append("&sound_level=");
     sb.append(sound);
@@ -418,15 +417,15 @@ void askIfICanGetFeedback() {
     }
     if (feedbacks.length > 0) {
       String feedbackString = join(feedbacks, "");
-
-      JSONObject resultObject = new JSONObject(feedbackString);
-      JSONArray a = resultObject.getJSONArray("data");
+      org.json.JSONObject resultObject = new org.json.JSONObject(feedbackString);
+      org.json.JSONArray a = resultObject.getJSONArray("data");
       
       if (a.length() > 0) {
-        JSONObject target_feedback = a.getJSONObject(0);
+        org.json.JSONObject target_feedback = a.getJSONObject(0);
         if(DEBUG) {
           println(target_feedback);
         }
+        int application_id = target_feedback.getInt("application_id");
         String type = target_feedback.getString("feedback_type");
         String description = target_feedback.getString("feedback_description");
         if (type.equals( "positive")) {
@@ -437,16 +436,23 @@ void askIfICanGetFeedback() {
           askForCandy(mPort);
           //if(candySound[1])
           askForSound(mPort);
-
           speak(description);
         }else if(type.equals("sound")){
           if(candySound[1]) askForSound(mPort);
-        }else {
+        }else if(type.equals("saying")){
+          if(application_id == 9){
+            speak("oh");
+          }
+          else if(application_id == 10){
+            askForNegative(mPort);
+            speak("ummm");
+          }
+        }
+        else {
           println("ask negative");
           //if(candySound[1])
           askForNegative(mPort);
           speak("ummm");
-
         }
         loadStrings(URL_updateFeedback + "?feedback_id=" + target_feedback.getInt("feedback_id"));
         delay(1000);
