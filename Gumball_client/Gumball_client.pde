@@ -2,7 +2,6 @@ import processing.serial.*;
 import org.json.*;
 import controlP5.*;
 import ddf.minim.*;
-import java.net.URLEncoder;
 import guru.ttslib.*;
 import bluetoothDesktop.*;
 
@@ -14,10 +13,10 @@ private static int mDeviceId;
 private static Serial mPort =null;
 private static String mPortName = null;
 
-private static String URL = "window_log/insert";
+private static String URL = "sensor_log/insert";
+private static String URL_window = "window_log/insert";
 private static String URL_getFeedback = "get_feedback";
 private static String URL_updateFeedback = "update_feedback";
-private static String URL_updateBlueTooth = "bluetooth_around";
 
 private String mHostName = null;
 private String inBuffer = null;
@@ -41,7 +40,7 @@ AudioPlayer player;
 ControlP5 cp5;
 CheckBox checkbox1, checkbox2;
 
-Bluetooth bt;
+//Bluetooth bt;
 int bluetoothTimer = 0;
 Device[] devices = new Device[0];
 
@@ -82,16 +81,16 @@ void setup() {
   
   
   // bluetooth init
-  try {
-    bt = new Bluetooth(this, Bluetooth.UUID_RFCOMM); // RFCOMM
-  
-    // Start a Service
-    bt.start("simpleService");
-  } 
-  catch (RuntimeException e) {
-    println("bluetooth off?");
-    println(e);
-  }
+//  try {
+//    bt = new Bluetooth(this, Bluetooth.UUID_RFCOMM); // RFCOMM
+//  
+//    // Start a Service
+//    bt.start("simpleService");
+//  } 
+//  catch (RuntimeException e) {
+//    println("bluetooth off?");
+//    println(e);
+//  }
 }
 
 void draw() {
@@ -143,17 +142,17 @@ void draw() {
       //println("only establish contact");
     }
   
-  bluetoothTimer++;
-  if(bluetoothTimer == 5) {
-    bluetoothTimer = 0;
-    bt.discover();
-    if(devices.length > 0) {
-      if(devices[0].name != "(Unknown)") {
-        // speak the name of BT if founded
-        //speak(devices[0].name);
-      }
-    }
-  }
+//  bluetoothTimer++;
+//  if(bluetoothTimer == 5) {
+//    bluetoothTimer = 0;
+//    bt.discover();
+//    if(devices.length > 0) {
+//      println(devices[0].name);
+//      if(devices[0].name != "(Unknown)") {
+//        speak(devices[0].name);
+//      }
+//    }
+//  }
 
 }
 void stop()
@@ -311,13 +310,51 @@ void ServerState(int theValue) {
  ***/
 private boolean insertDataToServer(String input) {
   String url = getInsertServerDatabaseURL(input);
+  String url_window = getInsertWindowDatabaseURL(input);
   //println(url);
-  if (url != null && bootError == 0) {
+  if (url_window != null && bootError == 0) {
     String[] lines = loadStrings(url);
     //println(lines);
-    return true;
+  }
+  if (url_window != null && bootError == 0) {
+    String[] lines_window = loadStrings(url_window);
   }
   return false;
+}
+private String getInsertWindowDatabaseURL(String input) {
+  String url = null; 
+  println(input);
+  if(input != null) {
+    String[] splited_data = input.split(",");
+    if (splited_data == null || splited_data[0].equals("0")) return null;
+    String sound, light, temp, people = null, window = null;
+    switch(splited_data.length){
+      case 5:
+        people = splited_data[3];
+        window = splited_data[4];
+      case 3:
+        sound = splited_data[0];
+        light = splited_data[1];
+        temp = splited_data[2];
+        break;
+      default:
+        return null;
+    }
+    StringBuilder sb = new StringBuilder();
+    sb.append(URL_window);
+    sb.append("?location_id=3");
+    sb.append("&device_id=");
+    sb.append(mDeviceId);
+    //cnt++;
+    sb.append("&state=");
+    sb.append(window);
+    url = sb.toString();  
+    if(DEBUG) {
+      //println(url);
+    }
+  }
+  println(url);
+  return url;
 }
 private String getInsertServerDatabaseURL(String input) {
   String url = null;
@@ -340,39 +377,15 @@ private String getInsertServerDatabaseURL(String input) {
     }
     StringBuilder sb = new StringBuilder();
     sb.append(URL);
-    sb.append("?location_id=3&window_id=");
-
-    sb.append(cnt);
-    sb.append("&device_id=");
+    sb.append("?device_id=");
     sb.append(mDeviceId);
-    //cnt++;
-    sb.append("&state=1");
-
-    /*
-    sb.append("?d_id=");
-    sb.append(mDeviceId);
-    sb.append("&s_lv=");
+    sb.append("&sound_level=");
     sb.append(sound);
-    sb.append("&l_lv=");
-    sb.append(light);
-    sb.append("&tem=");
+    sb.append("&temperature=");
     sb.append(temp);
-    sb.append("&p=");
+    sb.append("&light_level=");
+    sb.append(light);
 
-    if(people != null) {
-      sb.append("&p=");
-      sb.append(people);
-    }
-    boolean windowOpen=false;
-    if(window != null) {
-      sb.append("&w=");
-      sb.append(window);
-
-      windowOpen = window.equals("1");
-
-      utterWindSound(windowOpen);
-    }
-        */
     url = sb.toString();  
     if(DEBUG) {
       //println(url);
@@ -404,14 +417,15 @@ void askIfICanGetFeedback() {
     }
     if (feedbacks.length > 0) {
       String feedbackString = join(feedbacks, "");
-      JSONObject resultObject = new JSONObject(feedbackString);
-      JSONArray a = resultObject.getJSONArray("data");
+      org.json.JSONObject resultObject = new org.json.JSONObject(feedbackString);
+      org.json.JSONArray a = resultObject.getJSONArray("data");
       
       if (a.length() > 0) {
-        JSONObject target_feedback = a.getJSONObject(0);
+        org.json.JSONObject target_feedback = a.getJSONObject(0);
         if(DEBUG) {
           println(target_feedback);
         }
+        int application_id = target_feedback.getInt("application_id");
         String type = target_feedback.getString("feedback_type");
         String description = target_feedback.getString("feedback_description");
         if (type.equals( "positive")) {
@@ -425,7 +439,16 @@ void askIfICanGetFeedback() {
           speak(description);
         }else if(type.equals("sound")){
           if(candySound[1]) askForSound(mPort);
-        }else {
+        }else if(type.equals("saying")){
+          if(application_id == 9){
+            speak("oh");
+          }
+          else if(application_id == 10){
+            askForNegative(mPort);
+            speak("ummm");
+          }
+        }
+        else {
           println("ask negative");
           //if(candySound[1])
           askForNegative(mPort);
@@ -450,9 +473,9 @@ private void getSettings() {
   mHostName = getSettingFromConfigFile(dataPath("hostname.txt"));
   mDeviceId = Integer.parseInt(getSettingFromConfigFile(dataPath("deviceId.txt")));
   URL = mHostName + URL;
+  URL_window = mHostName + URL_window;
   URL_getFeedback = mHostName + URL_getFeedback;
   URL_updateFeedback = mHostName + URL_updateFeedback;
-  URL_updateBlueTooth = mHostName + URL_updateBlueTooth;
 }
 
 private String getSettingFromConfigFile(String fileName) {
@@ -493,34 +516,24 @@ public static String getMacAddress(String ipAddr) throws UnknownHostException, S
 /***
  Bluetooth
  ***/
+private void scanBluetooth() {
+  
+}
+
+
 void deviceDiscoverEvent(Device d) {
   devices = (Device[])append(devices, d);
   println("found: " + d.name + " " + d.address);
 }
 
 void deviceDiscoveryCompleteEvent(Device[] d) {
-  println("bluetooth discover completed: " + d.length + " devices found");
+  print("bluetooth discover completed: ");
   devices = d;
-  for(int i = 0; i < d.length; i++) {
-    uploadBlueToothAround(mDeviceId, devices[i].address, devices[i].name);
+  if(d.length == 0) {
+    println("found nothing");
+  } else if(d.length > 0) {
+    println(devices[0].name + " " + devices[0].address);
   }
-}
-
-
-private void uploadBlueToothAround(int deviceId, String bluetoothId, String bluetoothName) {
-
-  try{
-    String s = "?device_id=" + deviceId + "&bluetooth_id=" + URLEncoder.encode(bluetoothId, "UTF-8") + "&device_name=" + URLEncoder.encode(bluetoothName, "UTF-8");
-    //s = URLEncoder.encode(s, "UTF-8");
-
-    s = URL_updateBlueTooth + s;
-    println(s);
-    loadStrings(s);
-  } catch(UnsupportedEncodingException e) {
-  }
-
-
-  
 }
  
  
