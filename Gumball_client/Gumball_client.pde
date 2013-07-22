@@ -5,7 +5,7 @@ import ddf.minim.*;
 import guru.ttslib.*;
 import bluetoothDesktop.*;
 
-private static final float GLOBAL_FRAMERATE_FOR_GUMBALL_MACHINE = 60;
+private static final float GLOBAL_FRAMERATE_FOR_GUMBALL_MACHINE = 5;
 private static final int DELAY_GIVE_FEEDBACK = 20;
 
 private static boolean DEBUG = true;
@@ -18,14 +18,14 @@ private static String URL_window = "window_log/insert";
 private static String URL_getFeedback = "get_feedback";
 private static String URL_updateFeedback = "update_feedback";
 
-private String mHostName = null;
+private String mHostName = "http://127.0.0.1:1234/";
 private String inBuffer = null;
 private boolean[] candySound = new boolean[]{true, false};
 private boolean silentFlag = false;
 private int bootError = 0; // 0: ok, 1: open port error, 2: server string error
 
 int WIDTH = 360;
-int HEIGHT = 200;
+int HEIGHT = 400;
 int FULL_WIDTH = 370;
 int FULL_HEIGTH = 480;
 int TEXT_HEIGHT = HEIGHT/2+40;
@@ -53,14 +53,10 @@ private TTS tts; // Text to speech object
 void setup() {
 
   size(WIDTH, HEIGHT);
-  //PFont f = createFont("Arial", 20, true);
-  //textFont(f);
-  //PFont metaBold;
   metaBold = loadFont("SansSerif-48.vlw");
   Font01 = loadFont("SansSerif-48.vlw");
   textFont(metaBold, 24);
-  frameRate(1);
-  //frameRate(GLOBAL_FRAMERATE_FOR_GUMBALL_MACHINE);
+  frameRate(GLOBAL_FRAMERATE_FOR_GUMBALL_MACHINE);
   getSettings();
   portOpen(mPortName);
   if(mPort == null|| mPort.output == null){
@@ -136,24 +132,13 @@ void draw() {
       insertDataToServer(tmpBuffer);
     }
   if(bootError == 0) {
-      askForSensorData(mPort);
-    }else{
-      mPort.write('z');
+    askForSensorData(mPort);
+  }
+  else{
+    mPort.write('z');
       //println("only establish contact");
-    }
-  
-//  bluetoothTimer++;
-//  if(bluetoothTimer == 5) {
-//    bluetoothTimer = 0;
-//    bt.discover();
-//    if(devices.length > 0) {
-//      println(devices[0].name);
-//      if(devices[0].name != "(Unknown)") {
-//        speak(devices[0].name);
-//      }
-//    }
-//  }
-
+  }
+ 
 }
 void stop()
 {
@@ -162,24 +147,6 @@ void stop()
   minim.stop();
   super.stop();
 }
-//void serialEvent(Serial myPort) {
-//  /**/
-//  String tmpBuffer = myPort.readStringUntil('\n');
-//  if (tmpBuffer != null) {
-//    tmpBuffer = trim(tmpBuffer);
-//    //println(tmpBuffer);
-//    inBuffer = tmpBuffer;
-//    insertDataToServer(tmpBuffer);
-//  }
-//  myPort.clear();
-//  if(bootError == 0) {
-//    askForSensorData(myPort);
-//  }else{
-//    myPort.write('z');
-//    //println("only establish contact");
-//  }
-//}
-
 void dispose(){
   mPort.clear();
   mPort.stop();
@@ -188,12 +155,6 @@ void dispose(){
 
 void setupControlElement(){
   cp5 = new ControlP5(this);
-  /*checkbox1 = cp5.addCheckBox("checkBox1").setPosition(10, HEIGHT/2+20)
-  .setColorForeground(color(120))
-  .setColorActive(color(255))
-  .setColorLabel(color(255))
-  .setSize(10, 10)
-  .addItem("No candy", 0);*/
   int h = HEIGHT/2 + 10;
   checkbox1 = cp5.addCheckBox("checkBox1").setPosition(10, h)
                 .setColorForeground(color(120))
@@ -313,17 +274,17 @@ private boolean insertDataToServer(String input) {
   String url_window = getInsertWindowDatabaseURL(input);
   //println(url);
   if (url_window != null && bootError == 0) {
-    String[] lines = loadStrings(url);
-    //println(lines);
+    String[] lines_sensor = loadStrings(url);
+    println(lines_sensor);
   }
   if (url_window != null && bootError == 0) {
     String[] lines_window = loadStrings(url_window);
+    println(lines_window);
   }
   return false;
 }
 private String getInsertWindowDatabaseURL(String input) {
   String url = null; 
-  println(input);
   if(input != null) {
     String[] splited_data = input.split(",");
     if (splited_data == null || splited_data[0].equals("0")) return null;
@@ -353,12 +314,10 @@ private String getInsertWindowDatabaseURL(String input) {
       //println(url);
     }
   }
-  println(url);
   return url;
 }
 private String getInsertServerDatabaseURL(String input) {
   String url = null;
-  println(input);
   if (input != null) {
     String[] splited_data = input.split(",");
     if (splited_data == null || splited_data[0].equals("0")) return null;
@@ -470,8 +429,9 @@ void askIfICanGetFeedback() {
  ***/
 private void getSettings() {
   mPortName = getSettingFromConfigFile(dataPath("config.txt"));
-  mHostName = getSettingFromConfigFile(dataPath("hostname.txt"));
+  //mHostName = getSettingFromConfigFile(dataPath("hostname.txt"));
   mDeviceId = Integer.parseInt(getSettingFromConfigFile(dataPath("deviceId.txt")));
+  println(mPortName + " " + mHostName + " " + mDeviceId);
   URL = mHostName + URL;
   URL_window = mHostName + URL_window;
   URL_getFeedback = mHostName + URL_getFeedback;
