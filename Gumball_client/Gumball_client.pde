@@ -4,6 +4,9 @@ import controlP5.*;
 import ddf.minim.*;
 import guru.ttslib.*;
 import bluetoothDesktop.*;
+import java.net.URLEncoder;
+import java.io.UnsupportedEncodingException;
+
 
 private static final float GLOBAL_FRAMERATE_FOR_GUMBALL_MACHINE = 60;
 private static final int DELAY_GIVE_FEEDBACK = 20;
@@ -42,7 +45,7 @@ AudioPlayer player;
 ControlP5 cp5;
 CheckBox checkbox1, checkbox2;
 
-Bluetooth bt;
+//Bluetooth bt;
 int bluetoothTimer = 0;
 Device[] devices = new Device[0];
 
@@ -83,16 +86,16 @@ void setup() {
   
   
   // bluetooth init
-  try {
-    bt = new Bluetooth(this, Bluetooth.UUID_RFCOMM); // RFCOMM
-
-  // Start a Service
-    bt.start("simpleService");
-  } 
-  catch (RuntimeException e) {
-    println("bluetooth off?");
-    println(e);
-  }
+//  try {
+//    bt = new Bluetooth(this, Bluetooth.UUID_RFCOMM); // RFCOMM
+//
+//  // Start a Service
+//    bt.start("simpleService");
+//  } 
+//  catch (RuntimeException e) {
+//    println("bluetooth off?");
+//    println(e);
+//  }
 }
 
 void draw() {
@@ -144,11 +147,11 @@ void draw() {
       //println("only establish contact");
     }
   
-  bluetoothTimer++;
-  if(bluetoothTimer == 5) {
-    bluetoothTimer = 0;
-    bt.discover();
-  }
+//  bluetoothTimer++;
+//  if(bluetoothTimer == 5) {
+//    bluetoothTimer = 0;
+//    bt.discover();
+//  }
 
 }
 void stop()
@@ -489,57 +492,34 @@ private String getSettingFromConfigFile(String fileName) {
 }
 
 /***
- Functions for tool
- ***/
-public static String getMacAddress(String ipAddr) throws UnknownHostException, SocketException {
-  InetAddress addr = InetAddress.getByName(ipAddr);
-  NetworkInterface ni = NetworkInterface.getByInetAddress(addr);
-  if (ni == null)
-    return null;
-
-  byte[] mac = ni.getHardwareAddress();
-  if (mac == null)
-    return null;
-
-  StringBuilder sb = new StringBuilder(18);
-  for (byte b : mac) {
-    if (sb.length() > 0) {
-      sb.append(':');
-    }
-    sb.append(String.format("%02x", b));
-  }
-  return sb.toString();
-}
-
-/***
  Bluetooth
  ***/
 
-void deviceDiscoverEvent(Device d) {
-  devices = (Device[])append(devices, d);
-  println("found: " + d.name + " " + d.address);
-}
+//void deviceDiscoverEvent(Device d) {
+//  devices = (Device[])append(devices, d);
+//  println("found: " + d.name + " " + d.address);
+//}
 
-void deviceDiscoveryCompleteEvent(Device[] d) {
-  println("bluetooth discover completed: " + d.length + " devices found");
-  devices = d;
-  
-  for(int i = 0; i < d.length; i++) {
-    uploadBlueToothAround(mDeviceId, devices[i].address, devices[i].name);
-  }
-}
+//void deviceDiscoveryCompleteEvent(Device[] d) {
+//  println("bluetooth discover completed: " + d.length + " devices found");
+//  devices = d;
+//  
+//  for(int i = 0; i < d.length; i++) {
+//    uploadBlueToothAround(mDeviceId, devices[i].address, devices[i].name);
+//  }
+//}
 
-private void uploadBlueToothAround(int deviceId, String bluetoothId, String bluetoothName) {
-  try{
-    String s = "?device_id=" + deviceId + "&bluetooth_id=" + URLEncoder.encode(bluetoothId, "UTF-8") + "&device_name=" + URLEncoder.encode(bluetoothName, "UTF-8");
-    //s = URLEncoder.encode(s, "UTF-8");
-
-    s = URL_updateBlueTooth + s;
-    println(s);
-    loadStrings(s);
-  } catch(UnsupportedEncodingException e) {
-  }  
-}
+//private void uploadBlueToothAround(int deviceId, String bluetoothId, String bluetoothName) {
+//  try{
+//    String s = "?device_id=" + deviceId + "&bluetooth_id=" + URLEncoder.encode(bluetoothId, "UTF-8") + "&device_name=" + URLEncoder.encode(bluetoothName, "UTF-8");
+//    //s = URLEncoder.encode(s, "UTF-8");
+//
+//    s = URL_updateBlueTooth + s;
+//    println(s);
+//    loadStrings(s);
+//  } catch(UnsupportedEncodingException e) {
+//  }  
+//}
 
  
  
