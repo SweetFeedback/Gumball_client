@@ -17,6 +17,8 @@ private static String URL = "sensor_log/insert";
 private static String URL_window = "window_log/insert";
 private static String URL_getFeedback = "get_feedback";
 private static String URL_updateFeedback = "update_feedback";
+private static String URL_updateBlueTooth = "bluetooth_around";
+
 
 private String mHostName = null;
 private String inBuffer = null;
@@ -40,7 +42,7 @@ AudioPlayer player;
 ControlP5 cp5;
 CheckBox checkbox1, checkbox2;
 
-//Bluetooth bt;
+Bluetooth bt;
 int bluetoothTimer = 0;
 Device[] devices = new Device[0];
 
@@ -81,16 +83,16 @@ void setup() {
   
   
   // bluetooth init
-//  try {
-//    bt = new Bluetooth(this, Bluetooth.UUID_RFCOMM); // RFCOMM
-//  
-//    // Start a Service
-//    bt.start("simpleService");
-//  } 
-//  catch (RuntimeException e) {
-//    println("bluetooth off?");
-//    println(e);
-//  }
+  try {
+    bt = new Bluetooth(this, Bluetooth.UUID_RFCOMM); // RFCOMM
+
+  // Start a Service
+    bt.start("simpleService");
+  } 
+  catch (RuntimeException e) {
+    println("bluetooth off?");
+    println(e);
+  }
 }
 
 void draw() {
@@ -142,17 +144,11 @@ void draw() {
       //println("only establish contact");
     }
   
-//  bluetoothTimer++;
-//  if(bluetoothTimer == 5) {
-//    bluetoothTimer = 0;
-//    bt.discover();
-//    if(devices.length > 0) {
-//      println(devices[0].name);
-//      if(devices[0].name != "(Unknown)") {
-//        speak(devices[0].name);
-//      }
-//    }
-//  }
+  bluetoothTimer++;
+  if(bluetoothTimer == 5) {
+    bluetoothTimer = 0;
+    bt.discover();
+  }
 
 }
 void stop()
@@ -476,6 +472,8 @@ private void getSettings() {
   URL_window = mHostName + URL_window;
   URL_getFeedback = mHostName + URL_getFeedback;
   URL_updateFeedback = mHostName + URL_updateFeedback;
+  URL_updateBlueTooth = mHostName + URL_updateBlueTooth;
+
 }
 
 private String getSettingFromConfigFile(String fileName) {
@@ -516,10 +514,6 @@ public static String getMacAddress(String ipAddr) throws UnknownHostException, S
 /***
  Bluetooth
  ***/
-private void scanBluetooth() {
-  
-}
-
 
 void deviceDiscoverEvent(Device d) {
   devices = (Device[])append(devices, d);
@@ -527,14 +521,26 @@ void deviceDiscoverEvent(Device d) {
 }
 
 void deviceDiscoveryCompleteEvent(Device[] d) {
-  print("bluetooth discover completed: ");
+  println("bluetooth discover completed: " + d.length + " devices found");
   devices = d;
-  if(d.length == 0) {
-    println("found nothing");
-  } else if(d.length > 0) {
-    println(devices[0].name + " " + devices[0].address);
+  
+  for(int i = 0; i < d.length; i++) {
+    uploadBlueToothAround(mDeviceId, devices[i].address, devices[i].name);
   }
 }
+
+private void uploadBlueToothAround(int deviceId, String bluetoothId, String bluetoothName) {
+  try{
+    String s = "?device_id=" + deviceId + "&bluetooth_id=" + URLEncoder.encode(bluetoothId, "UTF-8") + "&device_name=" + URLEncoder.encode(bluetoothName, "UTF-8");
+    //s = URLEncoder.encode(s, "UTF-8");
+
+    s = URL_updateBlueTooth + s;
+    println(s);
+    loadStrings(s);
+  } catch(UnsupportedEncodingException e) {
+  }  
+}
+
  
  
 /***
