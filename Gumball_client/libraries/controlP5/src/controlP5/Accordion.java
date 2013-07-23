@@ -20,13 +20,10 @@ package controlP5;
  * Boston, MA 02111-1307 USA
  *
  * @author 		Andreas Schlegel (http://www.sojamo.de)
- * @modified	05/30/2012
- * @version		0.7.5
+ * @modified	12/23/2012
+ * @version		2.0.4
  *
  */
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * <p>
@@ -38,9 +35,7 @@ import java.util.List;
  * @see controlP5.ControlGroup
  * @example controllers/ControlP5accordion
  */
-public class Accordion extends ControlGroup<Accordion> {
-
-	protected final List<ControlGroup<?>> items = new ArrayList<ControlGroup<?>>();
+@SuppressWarnings("rawtypes") public class Accordion extends ControlGroup<Accordion> {
 
 	protected int spacing = 1;
 
@@ -49,11 +44,11 @@ public class Accordion extends ControlGroup<Accordion> {
 	protected int itemheight;
 
 	protected int _myMode = SINGLE;
-	
+
 	/**
 	 * Convenience constructor to extend Accordion.
 	 * 
-	 * @example use/ControlP5extendController 
+	 * @example use/ControlP5extendController
 	 * @param theControlP5
 	 * @param theName
 	 */
@@ -83,7 +78,7 @@ public class Accordion extends ControlGroup<Accordion> {
 		if (theGroup.getBackgroundHeight() < minHeight) {
 			theGroup.setBackgroundHeight(minHeight);
 		}
-		items.add(theGroup);
+		controllers.add(theGroup);
 		updateItems();
 		return this;
 	}
@@ -98,7 +93,7 @@ public class Accordion extends ControlGroup<Accordion> {
 	 */
 	@Override public Accordion remove(ControllerInterface<?> theGroup) {
 		if (theGroup instanceof ControlGroup<?>) {
-			items.remove(theGroup);
+			controllers.remove(theGroup);
 			((ControlGroup<?>) theGroup).removeListener(this);
 			updateItems();
 		}
@@ -114,9 +109,10 @@ public class Accordion extends ControlGroup<Accordion> {
 	 * @return Accordion
 	 */
 	public Accordion removeItem(ControlGroup<?> theGroup) {
-		if (theGroup == null)
+		if (theGroup == null) {
 			return this;
-		items.remove(theGroup);
+		}
+		controllers.remove(theGroup);
 		theGroup.removeListener(this);
 		theGroup.moveTo(cp5.controlWindow);
 		updateItems();
@@ -133,11 +129,14 @@ public class Accordion extends ControlGroup<Accordion> {
 	public Accordion updateItems() {
 		int n = 0;
 		setWidth(_myWidth);
-		for (ControlGroup<?> cg : items) {
-			n += cg.getBarHeight() + spacing;
-			cg.setPosition(0, n);
-			if (cg.isOpen()) {
-				n += cg.getBackgroundHeight();
+
+		for (ControllerInterface<?> cg : controllers.get()) {
+			if (cg instanceof ControlGroup) {
+				n += ((ControlGroup) cg).getBarHeight() + spacing;
+				cg.setPosition(0, n);
+				if (((ControlGroup) cg).isOpen()) {
+					n += ((ControlGroup) cg).getBackgroundHeight();
+				}
 			}
 		}
 		return this;
@@ -151,9 +150,11 @@ public class Accordion extends ControlGroup<Accordion> {
 	 */
 	public Accordion setMinItemHeight(int theHeight) {
 		minHeight = theHeight;
-		for (ControlGroup<?> cg : items) {
-			if (cg.getBackgroundHeight() < minHeight) {
-				cg.setBackgroundHeight(minHeight);
+		for (ControllerInterface<?> cg : controllers.get()) {
+			if (cg instanceof ControlGroup) {
+				if (((ControlGroup) cg).getBackgroundHeight() < minHeight) {
+					((ControlGroup) cg).setBackgroundHeight(minHeight);
+				}
 			}
 		}
 		updateItems();
@@ -166,8 +167,10 @@ public class Accordion extends ControlGroup<Accordion> {
 
 	public Accordion setItemHeight(int theHeight) {
 		itemheight = theHeight;
-		for (ControlGroup<?> cg : items) {
-			cg.setBackgroundHeight(itemheight);
+		for (ControllerInterface<?> cg : controllers.get()) {
+			if (cg instanceof ControlGroup) {
+				((ControlGroup) cg).setBackgroundHeight(itemheight);
+			}
 		}
 		updateItems();
 		return this;
@@ -179,8 +182,10 @@ public class Accordion extends ControlGroup<Accordion> {
 
 	@Override public Accordion setWidth(int theWidth) {
 		super.setWidth(theWidth);
-		for (ControlGroup<?> cg : items) {
-			cg.setWidth(theWidth);
+		for (ControllerInterface<?> cg : controllers.get()) {
+			if (cg instanceof ControlGroup) {
+				((ControlGroup) cg).setWidth(theWidth);
+			}
 		}
 		return this;
 	}
@@ -191,18 +196,20 @@ public class Accordion extends ControlGroup<Accordion> {
 	@Override @ControlP5.Invisible public void controlEvent(ControlEvent theEvent) {
 		if (theEvent.isGroup()) {
 			int n = 0;
-			for (ControlGroup<?> cg : items) {
-				n += cg.getBarHeight() + spacing;
-				cg.setPosition(0, n);
-				if (_myMode == SINGLE) {
-					if (cg == theEvent.getGroup() && cg.isOpen()) {
-						n += cg.getBackgroundHeight();
+			for (ControllerInterface<?> cg : controllers.get()) {
+				if (cg instanceof ControlGroup) {
+					n += ((ControlGroup) cg).getBarHeight() + spacing;
+					cg.setPosition(0, n);
+					if (_myMode == SINGLE) {
+						if (cg == theEvent.getGroup() && ((ControlGroup) cg).isOpen()) {
+							n += ((ControlGroup) cg).getBackgroundHeight();
+						} else {
+							((ControlGroup) cg).close();
+						}
 					} else {
-						cg.close();
-					}
-				} else {
-					if (cg.isOpen()) {
-						n += cg.getBackgroundHeight();
+						if (((ControlGroup) cg).isOpen()) {
+							n += ((ControlGroup) cg).getBackgroundHeight();
+						}
 					}
 				}
 			}
@@ -210,16 +217,16 @@ public class Accordion extends ControlGroup<Accordion> {
 	}
 
 	public Accordion open() {
-		int[] n = new int[items.size()];
-		for (int i = 0; i < items.size(); i++) {
+		int[] n = new int[controllers.size()];
+		for (int i = 0; i < controllers.size(); i++) {
 			n[i] = i;
 		}
 		return open(n);
 	}
 
 	public Accordion close() {
-		int[] n = new int[items.size()];
-		for (int i = 0; i < items.size(); i++) {
+		int[] n = new int[controllers.size()];
+		for (int i = 0; i < controllers.size(); i++) {
 			n[i] = i;
 		}
 		return close(n);
@@ -230,20 +237,22 @@ public class Accordion extends ControlGroup<Accordion> {
 			return open();
 		}
 		int n = 0, i = 0;
-		for (ControlGroup<?> cg : items) {
-			boolean a = false;
-			for (int j = 0; j < theId.length; j++) {
-				if (theId[j] == i) {
-					a = true;
+		for (ControllerInterface<?> cg : controllers.get()) {
+			if (cg instanceof ControlGroup) {
+				boolean a = false;
+				for (int j = 0; j < theId.length; j++) {
+					if (theId[j] == i) {
+						a = true;
+					}
 				}
-			}
-			boolean b = cg.isOpen() || a ? true : false;
-			i++;
-			n += cg.getBarHeight() + spacing;
-			cg.setPosition(0, n);
-			if (b) {
-				n += cg.getBackgroundHeight();
-				cg.open();
+				boolean b = ((ControlGroup) cg).isOpen() || a ? true : false;
+				i++;
+				n += ((ControlGroup) cg).getBarHeight() + spacing;
+				cg.setPosition(0, n);
+				if (b) {
+					n += ((ControlGroup) cg).getBackgroundHeight();
+					((ControlGroup) cg).open();
+				}
 			}
 		}
 		return this;
@@ -254,21 +263,23 @@ public class Accordion extends ControlGroup<Accordion> {
 			return close();
 		}
 		int n = 0, i = 0;
-		for (ControlGroup<?> cg : items) {
-			boolean a = false;
-			for (int j = 0; j < theId.length; j++) {
-				if (theId[j] == i) {
-					a = true;
+		for (ControllerInterface<?> cg : controllers.get()) {
+			if (cg instanceof ControlGroup) {
+				boolean a = false;
+				for (int j = 0; j < theId.length; j++) {
+					if (theId[j] == i) {
+						a = true;
+					}
 				}
-			}
-			boolean b = !cg.isOpen() || a ? true : false;
-			i++;
-			n += cg.getBarHeight() + spacing;
-			cg.setPosition(0, n);
-			if (b) {
-				cg.close();
-			} else {
-				n += cg.getBackgroundHeight();
+				boolean b = !((ControlGroup) cg).isOpen() || a ? true : false;
+				i++;
+				n += ((ControlGroup) cg).getBarHeight() + spacing;
+				((ControlGroup) cg).setPosition(0, n);
+				if (b) {
+					((ControlGroup) cg).close();
+				} else {
+					n += ((ControlGroup) cg).getBackgroundHeight();
+				}
 			}
 		}
 		return this;

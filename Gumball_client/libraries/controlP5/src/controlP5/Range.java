@@ -20,8 +20,8 @@ package controlP5;
  * Boston, MA 02111-1307 USA
  *
  * @author 		Andreas Schlegel (http://www.sojamo.de)
- * @modified	05/30/2012
- * @version		0.7.5
+ * @modified	12/23/2012
+ * @version		2.0.4
  *
  */
 
@@ -187,7 +187,7 @@ public class Range extends Controller<Range> {
 			if (c == 0) {
 				return this;
 			}
-			if (isMousePressed && !cp5.keyHandler.isAltDown()) {
+			if (isMousePressed && !cp5.isAltDown()) {
 				switch (mode) {
 				case (LEFT):
 					minHandle = PApplet.max(handleSize, PApplet.min(maxHandle, minHandle + c));

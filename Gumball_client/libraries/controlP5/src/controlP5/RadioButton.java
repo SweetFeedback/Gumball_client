@@ -20,8 +20,8 @@ package controlP5;
  * Boston, MA 02111-1307 USA
  *
  * @author 		Andreas Schlegel (http://www.sojamo.de)
- * @modified	05/30/2012
- * @version		0.7.5
+ * @modified	12/23/2012
+ * @version		2.0.4
  *
  */
 
@@ -73,6 +73,14 @@ public class RadioButton extends ControlGroup<RadioButton> {
 
 	private String _myPlugName;
 
+	protected int alignX = RIGHT_OUTSIDE;
+
+	protected int alignY = CENTER;
+	
+	protected int _myPaddingX = Label.paddingX;
+
+	protected int _myPaddingY = 0;
+
 	/**
 	 * Convenience constructor to extend RadioButton.
 	 * 
@@ -113,7 +121,7 @@ public class RadioButton extends ControlGroup<RadioButton> {
 	 */
 	public RadioButton addItem(final String theName, final float theValue) {
 		Toggle t = cp5.addToggle(theName, 0, 0, itemWidth, itemHeight);
-		t.getCaptionLabel().align(RIGHT_OUTSIDE, CENTER).setPadding(Label.paddingX, 0);
+		t.getCaptionLabel().align(alignX, alignY).setPadding(_myPaddingX, _myPaddingY);
 		t.setMode(ControlP5.DEFAULT);
 		t.setImages(images[0], images[1], images[2]);
 		t.setSize(images[0]);
@@ -152,6 +160,44 @@ public class RadioButton extends ControlGroup<RadioButton> {
 			}
 		}
 		updateValues(false);
+		return this;
+	}
+
+	private void updateAlign() {
+		for (Toggle t : _myRadioToggles) {
+			t.getCaptionLabel().align(alignX, alignY);
+		}
+	}
+
+	public RadioButton align(int[] a) {
+		return align(a[0], a[1]);
+	}
+
+	public RadioButton align(int theX, int theY) {
+		alignX = theX;
+		alignY = theY;
+		updateAlign();
+		return this;
+	}
+
+	public RadioButton alignX(int theX) {
+		return align(theX, alignY);
+	}
+
+	public RadioButton alignY(int theY) {
+		return align(alignX, theY);
+	}
+
+	public int[] getAlign() {
+		return new int[] { alignX, alignY };
+	}
+
+	public RadioButton setLabelPadding(int thePaddingX, int thePaddingY) {
+		_myPaddingX = thePaddingX;
+		_myPaddingY = thePaddingY;
+		for (Toggle t : _myRadioToggles) {
+			t.getCaptionLabel().setPadding(thePaddingX, thePaddingY);
+		}
 		return this;
 	}
 

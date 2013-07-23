@@ -24,7 +24,7 @@ public float s = 10;
 public float k = 100;
 
 void setup() {
-  size(400, 400,P3D);
+  size(400, 400);
   smooth();
   cp5 = new ControlP5(this);
 

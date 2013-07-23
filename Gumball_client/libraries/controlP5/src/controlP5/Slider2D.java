@@ -3,8 +3,8 @@ package controlP5;
 import processing.core.PApplet;
 
 /**
- * The Slider2D allows to control a handle within a 2D area. This controller returns an arrayValue
- * with the current xy position of its handle.
+ * The Slider2D allows to control a handle within a 2D area. This controller returns an arrayValue with the current xy position of its
+ * handle.
  * 
  * @author andreas schlegel
  * 
@@ -24,7 +24,7 @@ public class Slider2D extends Controller<Slider2D> {
 	public boolean isCrosshairs = true;
 
 	private String _myValueLabelSeparator = ",";
-	
+
 	/**
 	 * Convenience constructor to extend Slider2D.
 	 * 
@@ -37,7 +37,6 @@ public class Slider2D extends Controller<Slider2D> {
 		theControlP5.register(theControlP5.papplet, theName, this);
 	}
 
-	
 	protected Slider2D(ControlP5 theControlP5, ControllerGroup<?> theParent, String theName, int theX, int theY, int theWidth, int theHeight) {
 		super(theControlP5, theParent, theName, theX, theY, theWidth, theHeight);
 		_myArrayValue = new float[] { 0.0f, 0.0f };
@@ -56,7 +55,7 @@ public class Slider2D extends Controller<Slider2D> {
 	 */
 	@ControlP5.Invisible public Slider2D updateInternalEvents(PApplet theApplet) {
 		if (isInside()) {
-			if (!cp5.keyHandler.isAltDown()) {
+			if (!cp5.isAltDown()) {
 				float tX = PApplet.constrain(_myControlWindow.mouseX - (_myParent.getAbsolutePosition().x + position.x), 0, width - cursorWidth);
 				float tY = PApplet.constrain(_myControlWindow.mouseY - (_myParent.getAbsolutePosition().y + position.y), 0, height - cursorHeight);
 				if (isMousePressed) {
@@ -160,8 +159,7 @@ public class Slider2D extends Controller<Slider2D> {
 	}
 
 	/*
-	 * (non-Javadoc)
-	 * TODO see https://forum.processing.org/topic/controlp5-slider2d-questions
+	 * (non-Javadoc) TODO see https://forum.processing.org/topic/controlp5-slider2d-questions
 	 * 
 	 * @see controlP5.Controller#setArrayValue(float[])
 	 */
@@ -230,27 +228,28 @@ public class Slider2D extends Controller<Slider2D> {
 
 		public void display(PApplet theApplet, Slider2D theController) {
 
+			theApplet.noStroke();
+
 			if (theController.isInside()) {
 				theApplet.fill(theController.getColor().getForeground());
 			} else {
 				theApplet.fill(theController.getColor().getBackground());
 			}
-			theApplet.noStroke();
+
 			theApplet.rect(0, 0, getWidth(), getHeight());
 
 			if (isCrosshairs) {
 				if (theController.isInside()) {
-					theApplet.stroke(theController.getColor().getBackground());
+					theApplet.fill(theController.getColor().getBackground());
 				} else {
-					theApplet.stroke(theController.getColor().getForeground());
+					theApplet.fill(theController.getColor().getForeground());
 				}
-				theApplet.line(0, getCursorY() + getCursorHeight() / 2, getWidth(), getCursorY() + getCursorHeight() / 2);
-				theApplet.line(getCursorX() + getCursorWidth() / 2, 0, getCursorX() + getCursorWidth() / 2, getHeight());
-				theApplet.noStroke();
+				theApplet.rect(0, (int) (getCursorY() + getCursorHeight() / 2), (int) getWidth(), 1);
+				theApplet.rect((int) (getCursorX() + getCursorWidth() / 2), 0, 1, (int) getHeight());
 			}
-			
+
 			theApplet.fill(theController.getColor().getActive());
-			theApplet.rect(getCursorX(), getCursorY(), getCursorWidth(), getCursorHeight());
+			theApplet.rect((int) getCursorX(), (int) getCursorY(), (int) getCursorWidth(), (int) getCursorHeight());
 
 			getCaptionLabel().draw(theApplet, 0, 0, theController);
 			getValueLabel().draw(theApplet, 0, 0, theController);

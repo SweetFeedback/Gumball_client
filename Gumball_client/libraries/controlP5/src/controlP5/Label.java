@@ -20,14 +20,13 @@ package controlP5;
  * Boston, MA 02111-1307 USA
  *
  * @author 		Andreas Schlegel (http://www.sojamo.de)
- * @modified	05/30/2012
- * @version		0.7.5
+ * @modified	12/23/2012
+ * @version		2.0.4
  *
  */
 
 import processing.core.PApplet;
 import processing.core.PFont;
-import controlP5.ControlFont.BitFontLabel;
 
 /**
  * A custom label using controlP5's BitFonts or PFont based ControlFonts.
@@ -39,7 +38,6 @@ import controlP5.ControlFont.BitFontLabel;
  */
 public class Label implements CDrawable {
 
-	
 	protected int _myLetterSpacing = 0;
 
 	protected boolean isMultiline;
@@ -74,6 +72,8 @@ public class Label implements CDrawable {
 
 	protected int alignY = ControlP5.LEFT;
 
+	protected int textAlign = ControlP5.LEFT;
+
 	public static int paddingX = 4;
 
 	public static int paddingY = 4;
@@ -87,6 +87,8 @@ public class Label implements CDrawable {
 	protected int _myTextHeight = 1;
 
 	protected float offsetYratio = 0;
+
+	private ControlP5 cp5;
 
 	private Label(Label theLabel) {
 		_myText = theLabel.getText();
@@ -106,20 +108,13 @@ public class Label implements CDrawable {
 	}
 
 	private void init(ControlP5 theControlP5, String theValue, int theWidth, int theHeight, int theColor) {
+		cp5 = theControlP5;
 		_myWidth = theWidth;
 		_myHeight = theHeight;
 		_myText = theValue;
 		_myColor = theColor;
 		setLabeltype(new SinglelineLabel());
-		if (theControlP5.isControlFont && theControlP5.getFont() != null) {
-			setFont(theControlP5.getFont());
-		} else {
-			setFont(ControlP5.bitFont);
-			setLineHeight(BitFontRenderer.getHeight(ControlP5.bitFont));
-			int[] dim = BitFontRenderer.getDimension(this, (BitFontLabel) _myFontLabel.get(), getTextFormatted());
-			setWidth((theWidth != 0) ? theWidth : dim[0]);
-			setHeight((theHeight != 0) ? theHeight : dim[1]);
-		}
+		setFont(cp5.controlFont);
 		setLabeltype(new SinglelineLabel());
 		set(_myText);
 		_myControllerStyle = new ControllerStyle();
@@ -182,8 +177,7 @@ public class Label implements CDrawable {
 		}
 	}
 
-	@Override
-	public void draw(PApplet theApplet) {
+	@Override public void draw(PApplet theApplet) {
 		if (isVisible) {
 			_myFontLabel.adjust(theApplet, this);
 			draw(theApplet, 0, 0);
@@ -211,10 +205,10 @@ public class Label implements CDrawable {
 					hh += _myFontLabel.getHeight();
 				}
 				theApplet.fill(_myColorBackground);
-				theApplet.rect(0, 0, ww, hh);
+				theApplet.rect(0, 1, ww, hh);
 			}
 			theApplet.translate(_myControllerStyle.paddingLeft, _myControllerStyle.paddingTop);
-			_myFontLabel.draw(theApplet, this);
+			_myFontLabel.draw(cp5, this);
 			theApplet.popMatrix();
 		}
 	}
@@ -308,7 +302,7 @@ public class Label implements CDrawable {
 	}
 
 	public Label setFont(int theBitFontIndex) {
-		setFont(new ControlFont(theBitFontIndex));
+		ControlP5.logger.warning("BitFont is now of type PFont, use setFont(PFont) instead.");
 		return this;
 	}
 
@@ -317,23 +311,15 @@ public class Label implements CDrawable {
 	}
 
 	public Label setFont(ControlFont theFont) {
-		if (theFont.get() instanceof ControlFont.BitFontLabel) {
-			setLineHeight(BitFontRenderer.getHeight((ControlFont.BitFontLabel) theFont.get()));
-			_myFontLabel = new ControlFont(((ControlFont.BitFontLabel) theFont.get()).getFontIndex());
-		} else {
-			setLineHeight(((ControlFont.PFontLabel) theFont.get()).getSize());
-			ControlFont.PFontLabel cpf = ((ControlFont.PFontLabel) theFont.get());
-			_myFontLabel = new ControlFont(cpf.getFont(), cpf.getSize());
-		}
+		setLineHeight(theFont.getSize());
+		_myFontLabel = new ControlFont(theFont.getFont(), theFont.getSize());
 		_myFontLabel.init(this);
 		setChanged(true);
 		return this;
 	}
 
 	public Label setSize(int theSize) {
-		if (_myFontLabel.get() instanceof ControlFont.PFontLabel) {
-			((ControlFont.PFontLabel) _myFontLabel.get()).setSize(theSize);
-		}
+		_myFontLabel.setSize(theSize);
 		return this;
 	}
 
@@ -352,7 +338,7 @@ public class Label implements CDrawable {
 	}
 
 	public int getTextHeight() {
-		return _myFontLabel.get().getTextHeight();
+		return _myFontLabel.getTextHeight();
 	}
 
 	public int getLineHeight() {
@@ -451,6 +437,7 @@ public class Label implements CDrawable {
 	}
 
 	class SinglelineTextfield extends SinglelineLabel {
+
 		public String getTextFormatted() {
 			return _myText;
 		}
@@ -480,16 +467,16 @@ public class Label implements CDrawable {
 			}
 			switch (theAlignY) {
 			case (ControlP5.CENTER):
-				y = theController.getHeight() / 2 + _myFontLabel.get().getTop() - _myFontLabel.get().getCenter();
+				y = theController.getHeight() / 2 + _myFontLabel.getTop() - _myFontLabel.getCenter();
 				break;
 			case (ControlP5.TOP):
 				y = 0;
 				break;
 			case (ControlP5.BOTTOM):
-				y = theController.getHeight() - _myFontLabel.get().getHeight() - 1;
+				y = theController.getHeight() - _myFontLabel.getHeight() - 1;
 				break;
 			case (ControlP5.BASELINE):
-				y = theController.getHeight() + _myFontLabel.get().getTop() - 1;
+				y = theController.getHeight() + _myFontLabel.getTop() - 1;
 				break;
 			case (ControlP5.BOTTOM_OUTSIDE):
 				y = theController.getHeight() + _myPaddingY;
@@ -509,62 +496,53 @@ public class Label implements CDrawable {
 			theApplet.popMatrix();
 		}
 
-		@Override
-		public int getWidth() {
-			return (isFixedSize ? _myWidth : _myFontLabel.getWidth());
+		@Override public int getWidth() {
+			return isFixedSize ? _myWidth : _myFontLabel.getWidth();
 		}
 
-		@Override
-		public int getHeight() {
+		@Override public int getHeight() {
 			return _myFontLabel.getHeight();
 		}
 
-		@Override
-		public int getOverflow() {
+		@Override public int getOverflow() {
 			return -1;
 		}
 
-		@Override
-		public String getTextFormatted() {
+		@Override public String getTextFormatted() {
 			return (isToUpperCase ? _myText.toUpperCase() : _myText);
 		}
 	}
 
 	class MultilineLabel implements Labeltype {
 
-		@Override
-		public void draw(Label theLabel, PApplet theApplet, int theX, int theY, ControllerInterface<?> theController) {
+		@Override public void draw(Label theLabel, PApplet theApplet, int theX, int theY, ControllerInterface<?> theController) {
 			_myFontLabel.adjust(theApplet, theLabel);
 			theLabel.draw(theApplet, theX, theY);
 		}
 
-		@Override
-		public int getWidth() {
+		@Override public int getWidth() {
 			return _myWidth;
 		}
 
-		@Override
-		public int getHeight() {
+		@Override public int getHeight() {
 			return _myHeight;
 		}
 
-		@Override
-		public int getOverflow() {
-			return _myFontLabel.get().getOverflow();
+		@Override public int getOverflow() {
+			return _myFontLabel.getOverflow();
 		}
 
-		@Override
-		public String getTextFormatted() {
+		@Override public String getTextFormatted() {
 			return (isToUpperCase ? _myText.toUpperCase() : _myText);
 		}
+
 	}
 
 	/**
 	 * @exclude
 	 * @deprecated
 	 */
-	@Deprecated
-	public ControllerStyle style() {
+	@Deprecated public ControllerStyle style() {
 		return getStyle();
 	}
 
@@ -572,8 +550,7 @@ public class Label implements CDrawable {
 	 * @exclude
 	 * @deprecated
 	 */
-	@Deprecated
-	public Label setControlFont(ControlFont theFont) {
+	@Deprecated public Label setControlFont(ControlFont theFont) {
 		return setFont(theFont);
 	}
 
@@ -581,8 +558,7 @@ public class Label implements CDrawable {
 	 * @exclude
 	 * @deprecated
 	 */
-	@Deprecated
-	public Label setControlFontSize(int theSize) {
+	@Deprecated public Label setControlFontSize(int theSize) {
 		System.out.println("Label.getControlFontSize has been deprecated");
 		return this;
 	}

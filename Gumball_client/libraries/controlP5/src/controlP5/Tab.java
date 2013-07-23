@@ -20,8 +20,8 @@ package controlP5;
  * Boston, MA 02111-1307 USA
  *
  * @author 		Andreas Schlegel (http://www.sojamo.de)
- * @modified	05/30/2012
- * @version		0.7.5
+ * @modified	12/23/2012
+ * @version		2.0.4
  *
  */
 
@@ -64,7 +64,6 @@ public class Tab extends ControllerGroup<Tab> {
 	 */
 	public Tab(ControlP5 theControlP5, ControlWindow theControlWindow, String theName) {
 		super(theControlP5, null, theName, 0, 0);
-		_myControlWindow = theControlWindow;
 		position = new PVector();
 		absolutePosition = new PVector();
 		isMoveable = false;
@@ -85,7 +84,7 @@ public class Tab extends ControllerGroup<Tab> {
 
 	protected boolean updateLabel() {
 		isInside = inside();
-		return _myControlWindow.getTabs().size() > 2;
+		return cp5.getWindow().getTabs().size() > 2;
 	}
 
 	protected void drawLabel(PApplet theApplet) {
@@ -135,7 +134,7 @@ public class Tab extends ControllerGroup<Tab> {
 	}
 
 	protected boolean inside() {
-		return (_myControlWindow.mouseX > _myOffsetX && _myControlWindow.mouseX < _myOffsetX + _myWidth && _myControlWindow.mouseY > _myOffsetY && _myControlWindow.mouseY < _myOffsetY
+		return (cp5.getWindow().mouseX > _myOffsetX && cp5.getWindow().mouseX < _myOffsetX + _myWidth && cp5.getWindow().mouseY > _myOffsetY && cp5.getWindow().mouseY < _myOffsetY
 				+ _myHeight);
 	}
 
@@ -144,7 +143,7 @@ public class Tab extends ControllerGroup<Tab> {
 	 */
 	@ControlP5.Invisible
 	public void mousePressed() {
-		_myControlWindow.activateTab(this);
+		cp5.getWindow().activateTab(this);
 		if (isEventActive) {
 			cp5.getControlBroadcaster().broadcast(new ControlEvent(this), ControlP5Constants.METHOD);
 		}
@@ -180,7 +179,7 @@ public class Tab extends ControllerGroup<Tab> {
 
 	@Override
 	public Tab bringToFront() {
-		_myControlWindow.activateTab(this);
+		cp5.getWindow().activateTab(this);
 		return this;
 	}
 
@@ -189,7 +188,7 @@ public class Tab extends ControllerGroup<Tab> {
 	 */
 	@Override
 	public Tab moveTo(ControlWindow theWindow) {
-		_myControlWindow.removeTab(this);
+		cp5.getWindow().removeTab(this);
 		setTab(theWindow, getName());
 		return this;
 	}

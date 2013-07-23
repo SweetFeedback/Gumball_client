@@ -20,8 +20,8 @@ package controlP5;
  * Boston, MA 02111-1307 USA
  *
  * @author 		Andreas Schlegel (http://www.sojamo.de)
- * @modified	05/30/2012
- * @version		0.7.5
+ * @modified	12/23/2012
+ * @version		2.0.4
  *
  */
 
@@ -119,7 +119,6 @@ public class Slider extends Controller<Slider> {
 
 		_myCaptionLabel = new Label(cp5, theName).setColor(color.getCaptionLabel());
 		_myValueLabel = new Label(cp5, "" + getValue()).setColor(color.getValueLabel());
-
 		setSliderMode(FIX);
 
 	}
@@ -129,7 +128,7 @@ public class Slider extends Controller<Slider> {
 		// normalized value here but _myDefaultValue needs to be absolute.
 		// by normalizing _myValue the range of values can be from 'big-to-small'
 		// as well as from 'small-to-big'
-		// in order not to break anything, init() will be overriden here.
+		// in order not to break anything, init() will be overwritten here.
 
 		_myDefaultValue = getValue();
 		cp5.getControlBroadcaster().plug(cp5.papplet, this, _myName);
@@ -138,6 +137,7 @@ public class Slider extends Controller<Slider> {
 		setValue(_myDefaultValue);
 		isInit = true;
 		updateDisplayMode(DEFAULT);
+		
 	}
 
 	/**
@@ -186,7 +186,7 @@ public class Slider extends Controller<Slider> {
 	 */
 	@ControlP5.Invisible public Slider updateInternalEvents(PApplet theApplet) {
 		if (isVisible) {
-			if (isMousePressed && !cp5.keyHandler.isAltDown()) {
+			if (isMousePressed && !cp5.isAltDown()) {
 				_myView.updateInternalEvents(theApplet);
 			}
 		}

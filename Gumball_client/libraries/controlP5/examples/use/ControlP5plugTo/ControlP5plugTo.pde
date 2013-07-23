@@ -29,7 +29,6 @@ int cnt;
 void setup() {
   size(600,400,OPENGL);
   smooth();
-  textMode(SCREEN);
   test = new Test(50);
   testarray = new Test[10];
   for(int i=0;i<10;i++) {

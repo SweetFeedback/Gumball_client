@@ -20,8 +20,8 @@ package controlP5;
  * Boston, MA 02111-1307 USA
  *
  * @author 		Andreas Schlegel (http://www.sojamo.de)
- * @modified	05/30/2012
- * @version		0.7.5
+ * @modified	12/23/2012
+ * @version		2.0.4
  *
  */
 
@@ -704,12 +704,12 @@ public class ControllerProperties {
 			// http://code.google.com/p/json-simple/wiki/MappingBetweenJSONAndJavaEntities
 			String s = "\t<property>\n";
 			s += "\t\t<address>" + theProperty.getAddress() + "</address>\n";
-			s += "\t\t<class>" + ControlP5IOHandler.formatGetClass(theProperty.getController().getClass()) + "</class>\n";
+			s += "\t\t<class>" + CP.formatGetClass(theProperty.getController().getClass()) + "</class>\n";
 			s += "\t\t<setter>" + theProperty.getSetter() + "</setter>\n";
 			s += "\t\t<getter>" + theProperty.getGetter() + "</getter>\n";
-			s += "\t\t<type>" + ControlP5IOHandler.formatGetClass(theProperty.getType()) + "</type>\n";
+			s += "\t\t<type>" + CP.formatGetClass(theProperty.getType()) + "</type>\n";
 			s += "\t\t<value>" + cdata(OPEN, theProperty.getValue().getClass())
-					+ (theProperty.getValue().getClass().isArray() ? ControlP5IOHandler.arrayToString(theProperty.getValue()) : theProperty.getValue())
+					+ (theProperty.getValue().getClass().isArray() ? CP.arrayToString(theProperty.getValue()) : theProperty.getValue())
 					+ cdata(CLOSE, theProperty.getValue().getClass()) + "</value>\n";
 			s += "\t</property>\n";
 			return s;

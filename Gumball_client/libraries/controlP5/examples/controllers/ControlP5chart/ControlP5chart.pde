@@ -46,9 +46,11 @@ void setup() {
 
 void draw() {
   background(0);
-  // push (which should add an element at the end) 
-  // will be renamed to unshift (adds new elements at the beginning)
-  myChart.unshift("world", (sin(frameCount*0.1)*10));
+  // unshift: add data from left to right (first in)
+  myChart.unshift("world", (sin(frameCount*0.01)*10));
+  
+  // push: add data from right to left (last in)
+  myChart.push("earth", (sin(frameCount*0.1)*10));
 }
 
 

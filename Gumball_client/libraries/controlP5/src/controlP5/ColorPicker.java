@@ -1,3 +1,4 @@
+
 package controlP5;
 
 /**
@@ -18,8 +19,8 @@ package controlP5;
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  * 
  * @author Andreas Schlegel (http://www.sojamo.de)
- * @modified 05/30/2012
- * @version 0.7.5
+ * @modified 12/23/2012
+ * @version 2.0.4
  * 
  */
 
@@ -43,7 +44,7 @@ public class ColorPicker extends ControlGroup<ColorPicker> {
 
 	protected Slider sliderAlpha;
 
-	protected ControlWindowCanvas currentColor;
+	protected Canvas currentColor;
 
 	private Object _myPlug;
 
@@ -51,7 +52,7 @@ public class ColorPicker extends ControlGroup<ColorPicker> {
 
 	private boolean broadcast;
 
-	
+
 	/**
 	 * Convenience constructor to extend ColorPicker.
 	 * 
@@ -60,11 +61,11 @@ public class ColorPicker extends ControlGroup<ColorPicker> {
 	 * @param theName
 	 */
 	public ColorPicker(ControlP5 theControlP5, String theName) {
-		this(theControlP5, theControlP5.getDefaultTab(), theName, 0, 0,255,10);
+		this(theControlP5, theControlP5.getDefaultTab(), theName, 0, 0, 255, 10);
 		theControlP5.register(theControlP5.papplet, theName, this);
 	}
 
-	
+
 	protected ColorPicker(ControlP5 theControlP5, ControllerGroup<?> theParent, String theName, int theX, int theY, int theWidth, int theHeight) {
 		super(theControlP5, theParent, theName, theX, theY, theWidth, theHeight);
 		isBarVisible = false;
@@ -86,7 +87,7 @@ public class ColorPicker extends ControlGroup<ColorPicker> {
 		sliderRed.setDecimalPrecision(0);
 		sliderRed.setValue(255);
 
-		sliderGreen = cp5.addSlider(theName + "-green", 0, 255, 0, theHeight+1, theWidth, theHeight);
+		sliderGreen = cp5.addSlider(theName + "-green", 0, 255, 0, theHeight + 1, theWidth, theHeight);
 		cp5.removeProperty(sliderGreen);
 		sliderGreen.setId(1);
 		sliderGreen.setBroadcast(false);
@@ -100,7 +101,7 @@ public class ColorPicker extends ControlGroup<ColorPicker> {
 		sliderGreen.setDecimalPrecision(0);
 		sliderGreen.setValue(255);
 
-		sliderBlue = cp5.addSlider(theName + "-blue", 0, 255, 0, (theHeight+1)*2, theWidth, theHeight);
+		sliderBlue = cp5.addSlider(theName + "-blue", 0, 255, 0, (theHeight + 1) * 2, theWidth, theHeight);
 		cp5.removeProperty(sliderBlue);
 		sliderBlue.setId(2);
 		sliderBlue.setBroadcast(false);
@@ -114,7 +115,7 @@ public class ColorPicker extends ControlGroup<ColorPicker> {
 		sliderBlue.setDecimalPrecision(0);
 		sliderBlue.setValue(255);
 
-		sliderAlpha = cp5.addSlider(theName + "-alpha", 0, 255, 0, (theHeight+1)*3, theWidth, theHeight);
+		sliderAlpha = cp5.addSlider(theName + "-alpha", 0, 255, 0, (theHeight + 1) * 3, theWidth, theHeight);
 		cp5.removeProperty(sliderAlpha);
 		sliderAlpha.setId(3);
 		sliderAlpha.setBroadcast(false);
@@ -138,6 +139,7 @@ public class ColorPicker extends ControlGroup<ColorPicker> {
 		broadcast = true;
 	}
 
+
 	public ColorPicker plugTo(Object theObject) {
 		_myPlug = theObject;
 		if (!ControllerPlug.checkPlug(_myPlug, _myPlugName, new Class[] { int.class })) {
@@ -145,6 +147,7 @@ public class ColorPicker extends ControlGroup<ColorPicker> {
 		}
 		return this;
 	}
+
 
 	public ColorPicker plugTo(Object theObject, String thePlugName) {
 		_myPlug = theObject;
@@ -155,12 +158,14 @@ public class ColorPicker extends ControlGroup<ColorPicker> {
 		return this;
 	}
 
+
 	@Override @ControlP5.Invisible public void controlEvent(ControlEvent theEvent) {
 		if (broadcast) {
 			_myArrayValue[theEvent.getId()] = theEvent.getValue();
 			broadcast();
 		}
 	}
+
 
 	private ColorPicker broadcast() {
 		ControlEvent ev = new ControlEvent(this);
@@ -185,6 +190,7 @@ public class ColorPicker extends ControlGroup<ColorPicker> {
 		return this;
 	}
 
+
 	/**
 	 * Requires an array of size 4 for RGBA
 	 * 
@@ -201,6 +207,7 @@ public class ColorPicker extends ControlGroup<ColorPicker> {
 		return broadcast();
 	}
 
+
 	/**
 	 * {@inheritDoc}
 	 */
@@ -209,16 +216,20 @@ public class ColorPicker extends ControlGroup<ColorPicker> {
 		return this;
 	}
 
+
 	public int getColorValue() {
 		return 0xffffffff & (int) (_myArrayValue[3]) << 24 | (int) (_myArrayValue[0]) << 16 | (int) (_myArrayValue[1]) << 8 | (int) (_myArrayValue[2]) << 0;
 	}
 
-	private class ColorField extends ControlWindowCanvas {
+
+	private class ColorField extends Canvas {
+
 		public void draw(PApplet theApplet) {
 			theApplet.fill(_myArrayValue[0], _myArrayValue[1], _myArrayValue[2], _myArrayValue[3]);
 			theApplet.rect(0, 44, getWidth(), 15);
 		}
 	}
+
 
 	//	public ColorPicker setColor(int... theArray) {
 	//	switch (theArray.length) {

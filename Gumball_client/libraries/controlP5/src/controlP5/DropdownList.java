@@ -1,11 +1,11 @@
 package controlP5;
 
-import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import processing.core.PApplet;
+import processing.event.KeyEvent;
 
 /**
  * controlP5 is a processing gui library.
@@ -27,13 +27,13 @@ import processing.core.PApplet;
  * Boston, MA 02111-1307 USA
  *
  * @author 		Andreas Schlegel (http://www.sojamo.de)
- * @modified	05/30/2012
- * @version		0.7.5
+ * @modified	12/23/2012
+ * @version		2.0.4
  *
  */
 
 /**
- *@exmaple controllers/ControlP5dropdownList
+ * @exmaple controllers/ControlP5dropdownList
  */
 public class DropdownList extends ControlGroup<DropdownList> {
 
@@ -51,7 +51,7 @@ public class DropdownList extends ControlGroup<DropdownList> {
 
 	protected boolean isScrollbarVisible = true;
 
-	private int _myScrollbarWidth = 5;
+	private int _myScrollbarWidth = 6;
 
 	protected int _myHeight;
 
@@ -97,7 +97,8 @@ public class DropdownList extends ControlGroup<DropdownList> {
 		// workaround fix see code.goode.com/p/controlp5 issue 7
 		_myBackgroundHeight = theH < 10 ? 10 : theH;
 
-		_myScrollbar = new Slider(cp5, _myParent, theName + "Scroller", 0, 1, 1, _myWidth - _myScrollbarWidth, 0, _myScrollbarWidth, _myBackgroundHeight);
+		_myScrollbar = new Slider(cp5, _myParent, theName + "Scroller", 0, 1, 1, _myWidth - _myScrollbarWidth, 0, _myScrollbarWidth,
+				_myBackgroundHeight);
 		_myScrollbar.setBroadcast(false);
 		_myScrollbar.setSliderMode(Slider.FLEXIBLE);
 		_myScrollbar.setMoveable(false);
@@ -259,12 +260,13 @@ public class DropdownList extends ControlGroup<DropdownList> {
 	 * @exclude {@inheritDoc}
 	 */
 	@Override @ControlP5.Invisible public DropdownList updateInternalEvents(PApplet theApplet) {
-		boolean xx = _myControlWindow.mouseX > getAbsolutePosition().x && _myControlWindow.mouseX < getAbsolutePosition().x + _myWidth;
+		boolean xx = cp5.getWindow().mouseX > getAbsolutePosition().x && cp5.getWindow().mouseX < getAbsolutePosition().x + _myWidth;
 		// there is a 1px gap between bar and controllers, so -1 the top-y-position
-		boolean yy = _myControlWindow.mouseY > getAbsolutePosition().y - 1 && _myControlWindow.mouseY < getAbsolutePosition().y + _myBackgroundHeight;
+		boolean yy = cp5.getWindow().mouseY > getAbsolutePosition().y - 1
+				&& cp5.getWindow().mouseY < getAbsolutePosition().y + _myBackgroundHeight;
 		isInsideGroup = isOpen() ? xx && yy : false;
 		if ((isBarVisible ? isInside : false) || isInsideGroup) {
-			_myControlWindow.setMouseOverController(this);
+			cp5.getWindow().setMouseOverController(this);
 		}
 		return this;
 	}
@@ -305,6 +307,13 @@ public class DropdownList extends ControlGroup<DropdownList> {
 		}
 	}
 
+	public DropdownList setScrollbarWidth(int theWidth) {
+		_myScrollbar.setWidth(theWidth);
+		_myScrollbarWidth = theWidth;
+		setWidth(getWidth());
+		return this;
+	}
+
 	@Override public DropdownList setWidth(int theWidth) {
 		_myWidth = theWidth;
 		updateButtonWidth();
@@ -321,7 +330,8 @@ public class DropdownList extends ControlGroup<DropdownList> {
 	protected DropdownList addListButton(int theNum) {
 		for (int i = 0; (i < theNum) && (buttons.size() < maxButtons); i++) {
 			int index = buttons.size();
-			Button b = new Button(cp5, (ControllerGroup<?>) this, _myName + "Button" + index, index, 0, index * (_myItemHeight + spacing), _myWidth, _myItemHeight);
+			Button b = new Button(cp5, (ControllerGroup<?>) this, _myName + "Button" + index, index, 0, index * (_myItemHeight + spacing),
+					_myWidth, _myItemHeight);
 			b.setMoveable(false);
 			add(b);
 			cp5.register(null, "", b);
@@ -486,20 +496,21 @@ public class DropdownList extends ControlGroup<DropdownList> {
 		super.keyEvent(theEvent);
 		float x = getAbsolutePosition().x;
 		float y = getAbsolutePosition().y;
-		boolean b = (getWindow().mouseX > x && getWindow().mouseX < (x + _myWidth) && getWindow().mouseY > (y - getBarHeight()) && getWindow().mouseY < y + _myOriginalBackgroundHeight);
+		boolean b = (getWindow().mouseX > x && getWindow().mouseX < (x + _myWidth) && getWindow().mouseY > (y - getBarHeight()) && getWindow().mouseY < y
+				+ _myOriginalBackgroundHeight);
 		if (b && isOpen()) {
 			float step = (1.0f / (float) items.size());
-			if (cp5.keyHandler.isShiftDown) {
+			if (cp5.isShiftDown()) {
 				step *= 10;
-			} else if (cp5.keyHandler.isAltDown()) {
+			} else if (cp5.isAltDown()) {
 				step = 1;
 			}
-			if (theEvent.getID() == KeyEvent.KEY_PRESSED) {
+			if (theEvent.getAction() == KeyEvent.PRESS) {
 				switch (theEvent.getKeyCode()) {
-				case (KeyEvent.VK_UP):
+				case (PApplet.UP):
 					_myScrollbar.setValue(PApplet.constrain(_myScrollbar.getValue() + step, 0, 1));
 					break;
-				case (KeyEvent.VK_DOWN):
+				case (PApplet.DOWN):
 					_myScrollbar.setValue(PApplet.constrain(_myScrollbar.getValue() - step, 0, 1));
 					break;
 				}

@@ -20,8 +20,8 @@ package controlP5;
  * Boston, MA 02111-1307 USA
  *
  * @author 		Andreas Schlegel (http://www.sojamo.de)
- * @modified	05/30/2012
- * @version		0.7.5
+ * @modified	12/23/2012
+ * @version		2.0.4
  *
  */
 
@@ -115,7 +115,7 @@ public class Numberbox extends Controller<Numberbox> {
 	@ControlP5.Invisible
 	public Numberbox updateInternalEvents(PApplet theApplet) {
 		if (isActive) {
-			if (!cp5.keyHandler.isAltDown()) {
+			if (!cp5.isAltDown()) {
 				if (_myNumberCount == VERTICAL) {
 					setValue(_myValue + (_myControlWindow.mouseY - _myControlWindow.pmouseY) * _myMultiplier);
 				} else {
@@ -296,14 +296,18 @@ public class Numberbox extends Controller<Numberbox> {
 
 	class NumberboxView implements ControllerView<Numberbox> {
 
+		NumberboxView() {
+			_myValueLabel.align(LEFT, CENTER).setPadding(0, Label.paddingY);
+			_myCaptionLabel.align(LEFT, BOTTOM_OUTSIDE).setPadding(0, Label.paddingY);
+		}
 		public void display(PApplet theApplet, Numberbox theController) {
 			theApplet.fill(color.getBackground());
 			theApplet.rect(0, 0, width, height);
 			theApplet.fill((isActive) ? color.getActive() : color.getForeground());
 			int h = height / 2;
 			theApplet.triangle(0, h - 6, 6, h, 0, h + 6);
-			_myValueLabel.draw(theApplet, 10, (height - _myValueLabel.getHeight() + 4) / 2, theController);
-			_myCaptionLabel.draw(theApplet, 0, height + 4,theController);
+			_myValueLabel.draw(theApplet, 10, 0, theController);
+			_myCaptionLabel.draw(theApplet, 0, 0,theController);
 		}
 	}
 
