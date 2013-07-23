@@ -6,7 +6,10 @@ import guru.ttslib.*;
 import bluetoothDesktop.*;
 import java.net.URLEncoder;
 import java.io.UnsupportedEncodingException;
+import hypermedia.video.*;
+import java.awt.Rectangle;
 
+OpenCV opencv;
 
 private static final float GLOBAL_FRAMERATE_FOR_GUMBALL_MACHINE = 60;
 private static final int DELAY_GIVE_FEEDBACK = 20;
@@ -29,7 +32,11 @@ private boolean[] candySound = new boolean[]{true, false};
 private boolean silentFlag = false;
 private int bootError = 0; // 0: ok, 1: open port error, 2: server string error
 
-int WIDTH = 360;
+
+int contrast_value    = 0;
+int brightness_value  = 0;
+
+int WIDTH = 720;
 int HEIGHT = 200;
 int FULL_WIDTH = 370;
 int FULL_HEIGTH = 480;
@@ -96,6 +103,11 @@ void setup() {
 //    println("bluetooth off?");
 //    println(e);
 //  }
+  opencv = new OpenCV( this );
+  opencv.capture( 320, 240 );                   // open video stream
+  opencv.cascade( OpenCV.CASCADE_FRONTALFACE_ALT );  // load detection description, here-> front face detection : "haarcascade_frontalface_alt.xml"
+
+
 }
 
 void draw() {
@@ -152,13 +164,31 @@ void draw() {
 //    bluetoothTimer = 0;
 //    bt.discover();
 //  }
+  opencv.read();
+  opencv.convert( GRAY );
+  opencv.contrast( contrast_value );
+  opencv.brightness( brightness_value );
 
+  // proceed detection
+  Rectangle[] faces = opencv.detect( 1.2, 2, OpenCV.HAAR_DO_CANNY_PRUNING, 40, 40 );
+
+  // display the image
+  image( opencv.image(), 320, 0 );
+
+  // draw face area(s)
+  noFill();
+  stroke(255,0,0);
+  for( int i=0; i<faces.length; i++ ) {
+      text( "find face" + str(faces[i].x) + " " + str(faces[i].y), 0, 0);
+      rect( 320 + faces[i].x, faces[i].y, faces[i].width, faces[i].height ); 
+  }
 }
 void stop()
 {
   // always close Minim audio classes when you are done with them
   player.pause();
   minim.stop();
+  opencv.stop();
   super.stop();
 }
 //void serialEvent(Serial myPort) {
