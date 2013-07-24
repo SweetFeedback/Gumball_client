@@ -103,12 +103,17 @@ void setup() {
 //    println("bluetooth off?");
 //    println(e);
 //  }
-  
-  video = new Capture(this, 320, 240);
+  video = new Capture(this, 320, 480);
+  opencv = new OpenCV(this, 320, 480);
+  opencv.loadCascade(OpenCV.CASCADE_FRONTALFACE);
   
   // Start capturing the images from the camera
   video.start();
   
+}
+
+void captureEvent(Capture c) {
+  c.read();
 }
 
 void draw() {
@@ -167,52 +172,33 @@ void draw() {
 //    bluetoothTimer = 0;
 //    bt.discover();
 //  }
-  int cellSize = 20;
-  opencv = new OpenCV(this, 320, 480);
   
-  if (video.available()){
-    video.read();
-    video.loadPixels();
-     for (int i = 0; i < 16; i++) {
-      // Begin loop for rows
-      for (int j = 0; j < 12; j++) {
-      
-        // Where are we, pixel-wise?
-        int x = i*cellSize;
-        int y = j*cellSize;
-        int loc = (video.width - x - 1) + y*video.width; // Reversing x to mirror the image
-      
-        float r = red(video.pixels[loc]);
-        float g = green(video.pixels[loc]);
-        float b = blue(video.pixels[loc]);
-        // Make a new color with an alpha component
-        color c = color(r, g, b, 75);
-      
-        // Code for drawing a single rect
-        // Using translate in order for rotation to work properly
-        pushMatrix();
-        translate(x+cellSize/2, y+cellSize/2);
-        // Rotation formula based on brightness
-        rotate((2 * PI * brightness(c) / 255.0));
-        rectMode(CENTER);
-        fill(c);
-        noStroke();
-        // Rects are larger than the cell for some overlap
-        rect(0, 0, cellSize+6, cellSize+6);
-        popMatrix();
-      }
-    }
-  }
-  opencv.loadCascade(OpenCV.CASCADE_FRONTALFACE);  
-  faces = opencv.detect();
+  faceDetection();
+  getProblemFromServer(faces.length);
   
+}
+
+void getProblemFromServer(int numOfPeople) {
+}
+
+void faceDetection() {
+  opencv.loadImage(video);
+  //image(video, 0, 0);
+
   noFill();
   stroke(0, 255, 0);
   strokeWeight(3);
+  faces = opencv.detect();
+  println("found " + faces.length + " faces");
+
   for (int i = 0; i < faces.length; i++) {
-    rect(faces[i].x, faces[i].y, faces[i].width, faces[i].height);
+    println(faces[i].x + "," + faces[i].y);
+    //rect(faces[i].x, faces[i].y, faces[i].width, faces[i].height);
   }
+  
 }
+
+
 void stop()
 {
   // always close Minim audio classes when you are done with them
