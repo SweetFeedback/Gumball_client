@@ -1,4 +1,5 @@
 import processing.serial.*;
+import processing.video.*;
 import org.json.*;
 import controlP5.*;
 import ddf.minim.*;
@@ -6,10 +7,8 @@ import guru.ttslib.*;
 import bluetoothDesktop.*;
 import java.net.URLEncoder;
 import java.io.UnsupportedEncodingException;
-import hypermedia.video.*;
+import gab.opencv.*;
 import java.awt.Rectangle;
-
-OpenCV opencv;
 
 private static final float GLOBAL_FRAMERATE_FOR_GUMBALL_MACHINE = 60;
 private static final int DELAY_GIVE_FEEDBACK = 20;
@@ -32,9 +31,10 @@ private boolean[] candySound = new boolean[]{true, false};
 private boolean silentFlag = false;
 private int bootError = 0; // 0: ok, 1: open port error, 2: server string error
 
+Capture video;
 
-int contrast_value    = 0;
-int brightness_value  = 0;
+Rectangle[] faces;
+OpenCV opencv;
 
 int WIDTH = 720;
 int HEIGHT = 200;
@@ -103,11 +103,12 @@ void setup() {
 //    println("bluetooth off?");
 //    println(e);
 //  }
-  opencv = new OpenCV( this );
-  opencv.capture( 320, 240 );                   // open video stream
-  opencv.cascade( OpenCV.CASCADE_FRONTALFACE_ALT );  // load detection description, here-> front face detection : "haarcascade_frontalface_alt.xml"
-
-
+  
+  video = new Capture(this, 320, 240);
+  
+  // Start capturing the images from the camera
+  video.start();
+  
 }
 
 void draw() {
@@ -146,6 +147,7 @@ void draw() {
     }
     
   }
+  if(mPort != null){
   if (tmpBuffer != null) {
       tmpBuffer = trim(tmpBuffer);
       //println(tmpBuffer);
@@ -158,29 +160,57 @@ void draw() {
       mPort.write('z');
       //println("only establish contact");
     }
+  }
   
 //  bluetoothTimer++;
 //  if(bluetoothTimer == 5) {
 //    bluetoothTimer = 0;
 //    bt.discover();
 //  }
-  opencv.read();
-  opencv.convert( GRAY );
-  opencv.contrast( contrast_value );
-  opencv.brightness( brightness_value );
-
-  // proceed detection
-  Rectangle[] faces = opencv.detect( 1.2, 2, OpenCV.HAAR_DO_CANNY_PRUNING, 40, 40 );
-
-  // display the image
-  image( opencv.image(), 320, 0 );
-
-  // draw face area(s)
+  int cellSize = 20;
+  opencv = new OpenCV(this, 320, 480);
+  
+  if (video.available()){
+    video.read();
+    video.loadPixels();
+     for (int i = 0; i < 16; i++) {
+      // Begin loop for rows
+      for (int j = 0; j < 12; j++) {
+      
+        // Where are we, pixel-wise?
+        int x = i*cellSize;
+        int y = j*cellSize;
+        int loc = (video.width - x - 1) + y*video.width; // Reversing x to mirror the image
+      
+        float r = red(video.pixels[loc]);
+        float g = green(video.pixels[loc]);
+        float b = blue(video.pixels[loc]);
+        // Make a new color with an alpha component
+        color c = color(r, g, b, 75);
+      
+        // Code for drawing a single rect
+        // Using translate in order for rotation to work properly
+        pushMatrix();
+        translate(x+cellSize/2, y+cellSize/2);
+        // Rotation formula based on brightness
+        rotate((2 * PI * brightness(c) / 255.0));
+        rectMode(CENTER);
+        fill(c);
+        noStroke();
+        // Rects are larger than the cell for some overlap
+        rect(0, 0, cellSize+6, cellSize+6);
+        popMatrix();
+      }
+    }
+  }
+  opencv.loadCascade(OpenCV.CASCADE_FRONTALFACE);  
+  faces = opencv.detect();
+  
   noFill();
-  stroke(255,0,0);
-  for( int i=0; i<faces.length; i++ ) {
-      text( "find face" + str(faces[i].x) + " " + str(faces[i].y), 0, 0);
-      rect( 320 + faces[i].x, faces[i].y, faces[i].width, faces[i].height ); 
+  stroke(0, 255, 0);
+  strokeWeight(3);
+  for (int i = 0; i < faces.length; i++) {
+    rect(faces[i].x, faces[i].y, faces[i].width, faces[i].height);
   }
 }
 void stop()
@@ -188,7 +218,6 @@ void stop()
   // always close Minim audio classes when you are done with them
   player.pause();
   minim.stop();
-  opencv.stop();
   super.stop();
 }
 //void serialEvent(Serial myPort) {
