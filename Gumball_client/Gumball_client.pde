@@ -9,6 +9,7 @@ import java.net.URLEncoder;
 import java.io.UnsupportedEncodingException;
 import gab.opencv.*;
 import java.awt.Rectangle;
+import java.awt.Frame;
 
 private static final float GLOBAL_FRAMERATE_FOR_GUMBALL_MACHINE = 60;
 private static final int DELAY_GIVE_FEEDBACK = 20;
@@ -23,6 +24,7 @@ private static String URL_window = "window_log/insert";
 private static String URL_getFeedback = "get_feedback";
 private static String URL_updateFeedback = "update_feedback";
 private static String URL_updateBlueTooth = "bluetooth_around";
+private static String URL_updatePeopleAround = "";
 
 
 private String mHostName = null;
@@ -58,6 +60,49 @@ Device[] devices = new Device[0];
 
 
 private TTS tts; // Text to speech object
+
+PFrame problemFrame;
+SecondApplet s;
+
+public class PFrame extends Frame {
+    public PFrame() {
+        setBounds(100,100,200,150);
+        s = new SecondApplet();
+        add(s);
+        s.init();
+        show();
+    }
+}
+public class SecondApplet extends PApplet {
+  Frame f;
+    public void setup() {
+        size(200, 150);
+        noLoop();
+    }
+    public void draw() {
+    }
+    
+    public void setFrame(Frame f) {
+      this.f = f;
+    }
+    
+    public void setText(String content) {
+      text(content, 0, 50);
+    }
+    
+    void controlEvent(ControlEvent theEvent) {
+      if (theEvent.isController()) {
+        String name = theEvent.controller().name();
+        if (name == "OK") {
+          println("click");
+          f.setVisible(false);
+        } else if(name == "NO") {
+          println("NO");
+          f.setVisible(false);
+        }
+      }
+    }
+}
 
 /***
  Main Functions
@@ -110,6 +155,28 @@ void setup() {
   // Start capturing the images from the camera
   video.start();
   
+  CreateNewWindow();
+  
+  
+}
+
+void CreateNewWindow() {
+  problemFrame = new PFrame();
+  
+  // to controll frame visiable
+  s.setFrame(problemFrame);
+    
+  ControlP5 cp5 = new ControlP5(s);
+  cp5.addButton("OK")
+     .setPosition(10, 90)
+     .setSize(60,20)
+     ;
+     
+  cp5.addButton("NO")
+     .setPosition(100, 90)
+     .setSize(60,20)
+     ;
+  
 }
 
 void captureEvent(Capture c) {
@@ -118,30 +185,39 @@ void captureEvent(Capture c) {
 
 void draw() {
   background(128);
-  if(bootError > 0){
-    switch(bootError){
-      case 1:
-        text("Cannot open port: ", 10, HEIGHT/4 - 20);
-        text(mPortName, 10, HEIGHT/4 + 10);
-        break;
-      case 2:
-        text("Cannot connect server: ", 10, HEIGHT/4 - 20);
-        text(mHostName, 10, HEIGHT/4 + 10, 300, 24);
-        break;
-      default:
-        text("Unknown boot error", 10, HEIGHT/4 - 20);
-        break;
-    }
-  }else{
-    text("Sensor Data:", 10, HEIGHT/4 - 20);
-    text("S(dB), Li, T, IR, Win", 10, HEIGHT/4+10);
-    if (inBuffer != null) {
-      text(inBuffer, 8, height/2 - 10);      
-    }
-    if(!silentFlag) {
-      askIfICanGetFeedback();
-    }
+  
+  setMessageText();
+  
+  handleSensorData();
+  
+  
+//  bluetoothTimer++;
+//  if(bluetoothTimer == 5) {
+//    bluetoothTimer = 0;
+//    bt.discover();
+//  }
+  
+  faceDetection();
+  
+  cnt++;
+  if(cnt % 10 == 0) {
+    uploadPeopleAroundAndGetProblem();
   }
+  
+  /*
+  if(cnt % 10 == 0) {
+    problemFrame.setVisible(true);
+  } else {
+    problemFrame.setVisible(false);
+  }
+  */
+  
+  s.redraw();
+  
+}
+
+void handleSensorData() {
+  
   String tmpBuffer = null;
   while(mPort.available() > 0){
     tmpBuffer = mPort.readStringUntil('\n');
@@ -166,19 +242,48 @@ void draw() {
       //println("only establish contact");
     }
   }
-  
-//  bluetoothTimer++;
-//  if(bluetoothTimer == 5) {
-//    bluetoothTimer = 0;
-//    bt.discover();
-//  }
-  
-  faceDetection();
-  getProblemFromServer(faces.length);
-  
 }
 
-void getProblemFromServer(int numOfPeople) {
+void setMessageText() {
+  if(bootError > 0){
+    switch(bootError){
+      case 1:
+        text("Cannot open port: ", 10, HEIGHT/4 - 20);
+        text(mPortName, 10, HEIGHT/4 + 10);
+        break;
+      case 2:
+        text("Cannot connect server: ", 10, HEIGHT/4 - 20);
+        text(mHostName, 10, HEIGHT/4 + 10, 300, 24);
+        break;
+      default:
+        text("Unknown boot error", 10, HEIGHT/4 - 20);
+        break;
+    }
+  }else{
+    text("Sensor Data:", 10, HEIGHT/4 - 20);
+    text("S(dB), Li, T, IR, Win", 10, HEIGHT/4+10);
+    if (inBuffer != null) {
+      text(inBuffer, 8, height/2 - 10);      
+    }
+    if(!silentFlag) {
+      askIfICanGetFeedback();
+    }
+  }
+}
+
+void uploadPeopleAroundAndGetProblem() {
+  int peopleNum = faces.length;
+  
+  String url = URL_updatePeopleAround;
+  String[] lines = loadStrings(url);
+  
+  String feedbackString = join(lines, "");
+  //org.json.JSONObject resultObject = new org.json.JSONObject(feedbackString);
+  //org.json.JSONArray a = resultObject.getJSONArray("data");
+  
+  problemFrame.setVisible(true);
+  s.setText("Hello world");
+  
 }
 
 void faceDetection() {
@@ -280,6 +385,7 @@ void setupControlElement(){
 
 void controlEvent(ControlEvent theEvent) {
   CheckBox checkbox;
+  
   if (theEvent.isFrom(checkbox1)) {
     checkbox = checkbox1;
     if(silentFlag){
@@ -521,6 +627,7 @@ private void getSettings() {
   URL_getFeedback = mHostName + URL_getFeedback;
   URL_updateFeedback = mHostName + URL_updateFeedback;
   URL_updateBlueTooth = mHostName + URL_updateBlueTooth;
+  URL_updatePeopleAround = mHostName + URL_updatePeopleAround;
 
 }
 
