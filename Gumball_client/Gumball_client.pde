@@ -24,7 +24,7 @@ private static String URL_window = "window_log/insert";
 private static String URL_getFeedback = "get_feedback";
 private static String URL_updateFeedback = "update_feedback";
 private static String URL_updateBlueTooth = "bluetooth_around";
-private static String URL_updatePeopleAround = "";
+private static String URL_updatePeopleAround = "people_around";
 
 
 private String mHostName = null;
@@ -62,46 +62,62 @@ Device[] devices = new Device[0];
 private TTS tts; // Text to speech object
 
 PFrame problemFrame;
-SecondApplet s;
+SecondApplet secondApplet;
 
 public class PFrame extends Frame {
     public PFrame() {
-        setBounds(100,100,200,150);
-        s = new SecondApplet();
-        add(s);
-        s.init();
+        setBounds(400, 300, 600, 300);
+        setResizable(false);
+        secondApplet = new SecondApplet();
+        add(secondApplet);
+        secondApplet.init();
         show();
     }
 }
 public class SecondApplet extends PApplet {
+  
   Frame f;
-    public void setup() {
-        size(200, 150);
-        noLoop();
-    }
-    public void draw() {
-    }
+  private String mLocation;
+  private String mDescription;
+  
+  public void setup() {
+    size(600, 300);
+    noLoop();
+    textFont(metaBold, 24);
+    textSize(20);
+    mLocation = "";
+    mDescription = "";
     
-    public void setFrame(Frame f) {
-      this.f = f;
-    }
-    
-    public void setText(String content) {
-      text(content, 0, 50);
-    }
-    
-    void controlEvent(ControlEvent theEvent) {
-      if (theEvent.isController()) {
-        String name = theEvent.controller().name();
-        if (name == "OK") {
-          println("click");
-          f.setVisible(false);
-        } else if(name == "NO") {
-          println("NO");
-          f.setVisible(false);
-        }
+  }
+  
+  public void draw() {
+    background(120);
+    text("Location: " + mLocation, 30, 50);
+    text(mDescription, 30, 100);
+  }
+  
+  public void setFrame(Frame f) {
+    this.f = f;
+    f.setVisible(false);
+  }
+  
+  public void setText(String location, String content) {
+    mLocation = location;
+    mDescription = content;
+  }
+  
+  void controlEvent(ControlEvent theEvent) {
+    if (theEvent.isController()) {
+      String name = theEvent.controller().name();
+      if (name == "OK") {
+        println("click");
+        f.setVisible(false);
+      } else if(name == "NO") {
+        println("NO");
+        f.setVisible(false);
       }
     }
+  }
 }
 
 /***
@@ -166,16 +182,16 @@ void CreateNewWindow() {
   problemFrame = new PFrame();
   
   // to controll frame visiable
-  s.setFrame(problemFrame);
+  secondApplet.setFrame(problemFrame);
     
-  ControlP5 cp5 = new ControlP5(s);
+  ControlP5 cp5 = new ControlP5(secondApplet);
   cp5.addButton("OK")
-     .setPosition(10, 90)
+     .setPosition(100, 150)
      .setSize(60,20)
      ;
      
   cp5.addButton("NO")
-     .setPosition(100, 90)
+     .setPosition(200, 150)
      .setSize(60,20)
      ;
   
@@ -203,18 +219,12 @@ void draw() {
   
   cnt++;
   if(cnt % 10 == 0) {
-    uploadPeopleAroundAndGetProblem();
+    if(problemFrame.isVisible() && faces.length > 0) {
+    } else {
+      uploadPeopleAroundAndGetProblem(faces.length);
+    }
   }
-  
-  /*
-  if(cnt % 10 == 0) {
-    problemFrame.setVisible(true);
-  } else {
-    problemFrame.setVisible(false);
-  }
-  */
-  
-  s.redraw();
+  secondApplet.redraw();
   
 }
 
@@ -274,23 +284,6 @@ void setMessageText() {
   }
 }
 
-void uploadPeopleAroundAndGetProblem() {
-  int peopleNum = faces.length;
-  
-  String url = URL_updatePeopleAround;
-  String[] lines = loadStrings(url);
-  
-  String rawResults = join(lines, "");
-  //org.json.JSONObject resultObject = new org.json.JSONObject(rawResults);
-  //org.json.JSONArray a = resultObject.getJSONArray("data");
-  
-  s.setText("Hello world");
-  
-  problemFrame.setVisible(true);
-  
-  
-}
-
 void faceDetection() {
   opencv.loadImage(video);
   //image(video, 0, 0);
@@ -302,7 +295,7 @@ void faceDetection() {
   println("found " + faces.length + " faces");
 
   for (int i = 0; i < faces.length; i++) {
-    println(faces[i].x + "," + faces[i].y);
+    //println(faces[i].x + "," + faces[i].y);
     //rect(faces[i].x, faces[i].y, faces[i].width, faces[i].height);
   }
   
@@ -443,16 +436,36 @@ void NegSound(int theValue) {
 void ServerState(int theValue) {
 
 }
+
+
+void utterWindSound(boolean windowOpen){
+  float currentVolume = player.getGain();
+  print(""+currentVolume+"\n");
+  if(windowOpen){
+    if(!player.isPlaying())
+      player.loop();
+    player.shiftGain(currentVolume, 20, 1000);
+  }
+    
+   else if(!windowOpen && player.isPlaying()){
+    player.shiftGain(currentVolume, -20, 1000);
+    if(currentVolume <= -20.0)
+      player.pause();
+  }
+}
+
+
+
 /***
- Functions related to communication with php 
+ Functions related to communication with server 
  ***/
 
 private boolean insertDataToServer(String input) {
   String url = getInsertServerDatabaseURL(input);
   String url_window = getInsertWindowDatabaseURL(input);
   println(input);
-  println(url);
-  println(url_window);
+  //println(url);
+  //println(url_window);
   if (url != null && bootError == 0) {
     String[] lines = loadStrings(url);
   }
@@ -531,21 +544,34 @@ private String getInsertServerDatabaseURL(String input) {
   return url;
 }
 
-void utterWindSound(boolean windowOpen){
-  float currentVolume = player.getGain();
-  print(""+currentVolume+"\n");
-  if(windowOpen){
-    if(!player.isPlaying())
-      player.loop();
-    player.shiftGain(currentVolume, 20, 1000);
-  }
-    
-   else if(!windowOpen && player.isPlaying()){
-    player.shiftGain(currentVolume, -20, 1000);
-    if(currentVolume <= -20.0)
-      player.pause();
-  }
+
+void uploadPeopleAroundAndGetProblem(int peopleNum) {
+  String url = URL_updatePeopleAround;
+  String[] lines = loadStrings(url);
+  
+  String rawResults = join(lines, "");
+  org.json.JSONObject resultObject = new org.json.JSONObject(rawResults);
+  org.json.JSONObject problemJsonObject = resultObject.getJSONObject("problem");
+  println(problemJsonObject);
+  
+  String description = problemJsonObject.getString("problem_description");
+  String location = problemJsonObject.getString("location");
+  println(description);
+  secondApplet.setText(location, description);
+  delay(1000);
+  
+  speak(description);
+  
+  problemFrame.setVisible(true);
+
 }
+
+void reportProblemSolved(int problemId) {
+  
+}
+
+
+
 
 void askIfICanGetFeedback() {
   try {
