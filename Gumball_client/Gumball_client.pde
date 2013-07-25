@@ -33,11 +33,6 @@ private boolean[] candySound = new boolean[]{true, false};
 private boolean silentFlag = false;
 private int bootError = 0; // 0: ok, 1: open port error, 2: server string error
 
-Capture video;
-
-Rectangle[] faces;
-OpenCV opencv;
-
 int WIDTH = 720;
 int HEIGHT = 200;
 int FULL_WIDTH = 370;
@@ -54,55 +49,8 @@ AudioPlayer player;
 ControlP5 cp5;
 CheckBox checkbox1, checkbox2;
 
-//Bluetooth bt;
-int bluetoothTimer = 0;
-Device[] devices = new Device[0];
-
 
 private TTS tts; // Text to speech object
-
-PFrame problemFrame;
-SecondApplet s;
-
-public class PFrame extends Frame {
-    public PFrame() {
-        setBounds(100,100,200,150);
-        s = new SecondApplet();
-        add(s);
-        s.init();
-        show();
-    }
-}
-public class SecondApplet extends PApplet {
-  Frame f;
-    public void setup() {
-        size(200, 150);
-        noLoop();
-    }
-    public void draw() {
-    }
-    
-    public void setFrame(Frame f) {
-      this.f = f;
-    }
-    
-    public void setText(String content) {
-      text(content, 0, 50);
-    }
-    
-    void controlEvent(ControlEvent theEvent) {
-      if (theEvent.isController()) {
-        String name = theEvent.controller().name();
-        if (name == "OK") {
-          println("click");
-          f.setVisible(false);
-        } else if(name == "NO") {
-          println("NO");
-          f.setVisible(false);
-        }
-      }
-    }
-}
 
 /***
  Main Functions
@@ -136,53 +84,7 @@ void setup() {
   player = minim.loadFile ("../audio/wind.wav");
   
   // Text to speech
-  tts = new TTS();
-  
-  
-  // bluetooth init
-//  try {
-//    bt = new Bluetooth(this, Bluetooth.UUID_RFCOMM); // RFCOMM
-//
-//  // Start a Service
-//    bt.start("simpleService");
-//  } 
-//  catch (RuntimeException e) {
-//    println("bluetooth off?");
-//    println(e);
-//  }
-  video = new Capture(this, 320, 480);
-  opencv = new OpenCV(this, 320, 480);
-  opencv.loadCascade(OpenCV.CASCADE_FRONTALFACE);
-  
-  // Start capturing the images from the camera
-  video.start();
-  
-  CreateNewWindow();
-  
-  
-}
-
-void CreateNewWindow() {
-  problemFrame = new PFrame();
-  
-  // to controll frame visiable
-  s.setFrame(problemFrame);
-    
-  ControlP5 cp5 = new ControlP5(s);
-  cp5.addButton("OK")
-     .setPosition(10, 90)
-     .setSize(60,20)
-     ;
-     
-  cp5.addButton("NO")
-     .setPosition(100, 90)
-     .setSize(60,20)
-     ;
-  
-}
-
-void captureEvent(Capture c) {
-  c.read();
+  tts = new TTS();  
 }
 
 void draw() {
@@ -191,31 +93,6 @@ void draw() {
   setMessageText();
   
   handleSensorData();
-  
-  
-//  bluetoothTimer++;
-//  if(bluetoothTimer == 5) {
-//    bluetoothTimer = 0;
-//    bt.discover();
-//  }
-  
-  faceDetection();
-  
-  cnt++;
-  if(cnt % 10 == 0) {
-    uploadPeopleAroundAndGetProblem();
-  }
-  
-  /*
-  if(cnt % 10 == 0) {
-    problemFrame.setVisible(true);
-  } else {
-    problemFrame.setVisible(false);
-  }
-  */
-  
-  s.redraw();
-  
 }
 
 void handleSensorData() {
@@ -273,41 +150,6 @@ void setMessageText() {
     }
   }
 }
-
-void uploadPeopleAroundAndGetProblem() {
-  int peopleNum = faces.length;
-  
-  String url = URL_updatePeopleAround;
-  String[] lines = loadStrings(url);
-  
-  String rawResults = join(lines, "");
-  //org.json.JSONObject resultObject = new org.json.JSONObject(rawResults);
-  //org.json.JSONArray a = resultObject.getJSONArray("data");
-  
-  s.setText("Hello world");
-  
-  problemFrame.setVisible(true);
-  
-  
-}
-
-void faceDetection() {
-  opencv.loadImage(video);
-  //image(video, 0, 0);
-
-  noFill();
-  stroke(0, 255, 0);
-  strokeWeight(3);
-  faces = opencv.detect();
-  println("found " + faces.length + " faces");
-
-  for (int i = 0; i < faces.length; i++) {
-    println(faces[i].x + "," + faces[i].y);
-    //rect(faces[i].x, faces[i].y, faces[i].width, faces[i].height);
-  }
-  
-}
-
 
 void stop() {
   // always close Minim audio classes when you are done with them
@@ -369,10 +211,25 @@ void setupControlElement() {
      .setPosition(220,h + 60)
      .setSize(60,20)
      ;
+     
+  DropdownList deviceDropDownList = cp5.addDropdownList("device-port")
+    .setPosition(150, 80)
+    .setSize(150, 150)
+    ;
+  deviceDropDownList.addItems(Serial.list());
+  
 }
 
 void controlEvent(ControlEvent theEvent) {
   CheckBox checkbox;
+  
+  // drop down list
+  if(theEvent.isGroup()) {
+    int index = (int)theEvent.getGroup().getValue();
+    if(index >= 0 && index < Serial.list().length) {
+      println(Serial.list()[index]);
+    }
+  }
   
   if (theEvent.isFrom(checkbox1)) {
     checkbox = checkbox1;
@@ -524,9 +381,6 @@ private String getInsertServerDatabaseURL(String input) {
     sb.append(light);
 
     url = sb.toString();  
-    if(DEBUG) {
-      //println(url);
-    }
   }
   return url;
 }
@@ -603,7 +457,7 @@ void askIfICanGetFeedback() {
 /***
  Functions related to config file 
  ***/
-private void getSettings() {  
+private void getSettings() {
   processing.data.XML xml;
   xml = loadXML(dataPath("config.xml"));
   mPortName = xml.getChild("port").getContent();
@@ -629,37 +483,6 @@ private String getSettingFromConfigFile(String fileName) {
   //println("config port is " + name);
   return name;
 }
-
-/***
- Bluetooth
- ***/
-
-//void deviceDiscoverEvent(Device d) {
-//  devices = (Device[])append(devices, d);
-//  println("found: " + d.name + " " + d.address);
-//}
-
-//void deviceDiscoveryCompleteEvent(Device[] d) {
-//  println("bluetooth discover completed: " + d.length + " devices found");
-//  devices = d;
-//  
-//  for(int i = 0; i < d.length; i++) {
-//    uploadBlueToothAround(mDeviceId, devices[i].address, devices[i].name);
-//  }
-//}
-
-//private void uploadBlueToothAround(int deviceId, String bluetoothId, String bluetoothName) {
-//  try{
-//    String s = "?device_id=" + deviceId + "&bluetooth_id=" + URLEncoder.encode(bluetoothId, "UTF-8") + "&device_name=" + URLEncoder.encode(bluetoothName, "UTF-8");
-//    //s = URLEncoder.encode(s, "UTF-8");
-//
-//    s = URL_updateBlueTooth + s;
-//    println(s);
-//    loadStrings(s);
-//  } catch(UnsupportedEncodingException e) {
-//  }  
-//}
-
  
  
 /***
