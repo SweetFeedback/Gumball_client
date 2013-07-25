@@ -1,4 +1,2 @@
-config.txt
-deviceid.txt
-hostname.txt
+data/config.xml
 .DB_Store

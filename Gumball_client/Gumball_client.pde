@@ -618,17 +618,19 @@ void askIfICanGetFeedback() {
 /***
  Functions related to config file 
  ***/
-private void getSettings() {
-  mPortName = getSettingFromConfigFile(dataPath("config.txt"));
-  mHostName = getSettingFromConfigFile(dataPath("hostname.txt"));
-  mDeviceId = Integer.parseInt(getSettingFromConfigFile(dataPath("deviceId.txt")));
+private void getSettings() {  
+  processing.data.XML xml;
+  xml = loadXML(dataPath("config.xml"));
+  mPortName = xml.getChild("port").getContent();
+  mDeviceId = xml.getChild("device_id").getIntContent();
+  mHostName = xml.getChild("host").getContent();
+  
   URL = mHostName + URL;
   URL_window = mHostName + URL_window;
   URL_getFeedback = mHostName + URL_getFeedback;
   URL_updateFeedback = mHostName + URL_updateFeedback;
   URL_updateBlueTooth = mHostName + URL_updateBlueTooth;
   URL_updatePeopleAround = mHostName + URL_updatePeopleAround;
-
 }
 
 private String getSettingFromConfigFile(String fileName) {
