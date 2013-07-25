@@ -118,17 +118,19 @@ void setup() {
   textFont(metaBold, 24);
   frameRate(1);
   //frameRate(GLOBAL_FRAMERATE_FOR_GUMBALL_MACHINE);
+  
   getSettings();
   portOpen(mPortName);
   if(mPort == null|| mPort.output == null){
     bootError = 1;
     println("Port Unavailable");
   }
-  setupControlElement();
   if(bootError == 0 && loadStrings(mHostName) == null){
     bootError = 2;
     println("Server Unavailable");
   }
+  
+  setupControlElement();
   
   minim = new Minim (this);
   player = minim.loadFile ("../audio/wind.wav");
@@ -217,27 +219,28 @@ void draw() {
 }
 
 void handleSensorData() {
+  if (bootError == 1) {
+    return;
+  }
   
   String tmpBuffer = null;
-  while(mPort.available() > 0){
+  while (mPort.available() > 0) {
     tmpBuffer = mPort.readStringUntil('\n');
-    if (tmpBuffer != null) {
-    }
-    else{
+    if (tmpBuffer == null) {
       break;
     }
     
   }
-  if(mPort != null){
-  if (tmpBuffer != null) {
+  if(mPort != null) {
+    if (tmpBuffer != null) {
       tmpBuffer = trim(tmpBuffer);
       //println(tmpBuffer);
       inBuffer = tmpBuffer;
       insertDataToServer(tmpBuffer);
     }
-  if(bootError == 0) {
+    if (bootError == 0) {
       askForSensorData(mPort);
-    }else{
+    } else {
       mPort.write('z');
       //println("only establish contact");
     }
@@ -277,12 +280,14 @@ void uploadPeopleAroundAndGetProblem() {
   String url = URL_updatePeopleAround;
   String[] lines = loadStrings(url);
   
-  String feedbackString = join(lines, "");
-  //org.json.JSONObject resultObject = new org.json.JSONObject(feedbackString);
+  String rawResults = join(lines, "");
+  //org.json.JSONObject resultObject = new org.json.JSONObject(rawResults);
   //org.json.JSONArray a = resultObject.getJSONArray("data");
   
-  problemFrame.setVisible(true);
   s.setText("Hello world");
+  
+  problemFrame.setVisible(true);
+  
   
 }
 
@@ -304,38 +309,21 @@ void faceDetection() {
 }
 
 
-void stop()
-{
+void stop() {
   // always close Minim audio classes when you are done with them
   player.pause();
   minim.stop();
   super.stop();
 }
-//void serialEvent(Serial myPort) {
-//  /**/
-//  String tmpBuffer = myPort.readStringUntil('\n');
-//  if (tmpBuffer != null) {
-//    tmpBuffer = trim(tmpBuffer);
-//    //println(tmpBuffer);
-//    inBuffer = tmpBuffer;
-//    insertDataToServer(tmpBuffer);
-//  }
-//  myPort.clear();
-//  if(bootError == 0) {
-//    askForSensorData(myPort);
-//  }else{
-//    myPort.write('z');
-//    //println("only establish contact");
-//  }
-//}
 
-void dispose(){
+
+void dispose() {
   mPort.clear();
   mPort.stop();
   super.dispose();
 }
 
-void setupControlElement(){
+void setupControlElement() {
   cp5 = new ControlP5(this);
   /*checkbox1 = cp5.addCheckBox("checkBox1").setPosition(10, HEIGHT/2+20)
   .setColorForeground(color(120))
@@ -458,22 +446,25 @@ void ServerState(int theValue) {
 /***
  Functions related to communication with php 
  ***/
+
 private boolean insertDataToServer(String input) {
   String url = getInsertServerDatabaseURL(input);
   String url_window = getInsertWindowDatabaseURL(input);
-  //println(url);
-  if (url_window != null && bootError == 0) {
+  println(input);
+  println(url);
+  println(url_window);
+  if (url != null && bootError == 0) {
     String[] lines = loadStrings(url);
-    //println(lines);
   }
   if (url_window != null && bootError == 0) {
     String[] lines_window = loadStrings(url_window);
   }
   return false;
 }
+
 private String getInsertWindowDatabaseURL(String input) {
   String url = null; 
-  println(input);
+  
   if(input != null) {
     String[] splited_data = input.split(",");
     if (splited_data == null || splited_data[0].equals("0")) return null;
@@ -495,20 +486,16 @@ private String getInsertWindowDatabaseURL(String input) {
     sb.append("?location_id=3");
     sb.append("&device_id=");
     sb.append(mDeviceId);
-    //cnt++;
     sb.append("&state=");
     sb.append(window);
     url = sb.toString();  
-    if(DEBUG) {
-      //println(url);
-    }
   }
-  println(url);
+
   return url;
 }
+
 private String getInsertServerDatabaseURL(String input) {
   String url = null;
-  println(input);
   if (input != null) {
     String[] splited_data = input.split(",");
     if (splited_data == null || splited_data[0].equals("0")) return null;
@@ -543,6 +530,7 @@ private String getInsertServerDatabaseURL(String input) {
   }
   return url;
 }
+
 void utterWindSound(boolean windowOpen){
   float currentVolume = player.getGain();
   print(""+currentVolume+"\n");
@@ -561,24 +549,22 @@ void utterWindSound(boolean windowOpen){
 
 void askIfICanGetFeedback() {
   try {
-    String[] feedbacks = loadStrings(URL_getFeedback + "?device_id=" + mDeviceId);
-    if(DEBUG) {
-      //println(feedbacks);
-    }
-    if (feedbacks.length > 0) {
-      String feedbackString = join(feedbacks, "");
-      org.json.JSONObject resultObject = new org.json.JSONObject(feedbackString);
-      org.json.JSONArray a = resultObject.getJSONArray("data");
+    String[] rawResults = loadStrings(URL_getFeedback + "?device_id=" + mDeviceId);
+    
+    if (rawResults.length > 0) {
+      String rawResult = join(rawResults, "");
+      org.json.JSONObject resultObject = new org.json.JSONObject(rawResult);
+      org.json.JSONArray feedbackArray = resultObject.getJSONArray("data");
       
-      if (a.length() > 0) {
-        org.json.JSONObject target_feedback = a.getJSONObject(0);
+      if (feedbackArray.length() > 0) {
+        org.json.JSONObject target_feedback = feedbackArray.getJSONObject(0);
         if(DEBUG) {
           println(target_feedback);
         }
         int application_id = target_feedback.getInt("application_id");
         String type = target_feedback.getString("feedback_type");
         String description = target_feedback.getString("feedback_description");
-        if (type.equals( "positive")) {
+        if (type.equals("positive")) {
           if(DEBUG) {
             println("give candy");
           }
@@ -587,9 +573,9 @@ void askIfICanGetFeedback() {
           //if(candySound[1])
           askForSound(mPort);
           speak(description);
-        }else if(type.equals("sound")){
+        }else if(type.equals("sound")) {
           if(candySound[1]) askForSound(mPort);
-        }else if(type.equals("saying")){
+        }else if(type.equals("saying")) {
           if(application_id == 9){
             speak("oh");
           }
@@ -597,8 +583,7 @@ void askIfICanGetFeedback() {
             askForNegative(mPort);
             speak("ummm");
           }
-        }
-        else {
+        } else {
           println("ask negative");
           //if(candySound[1])
           askForNegative(mPort);
