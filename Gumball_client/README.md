@@ -23,7 +23,8 @@
 			If you are using Mac, you will be /Documents/Processing/libraries
 		d. Desktopbluetooth (http://www.extrapixel.ch/processing/bluetoothDesktop/)
 			If your getting errors about the "avetanaBT.jar", just delete that file from the library folder.
-		e. OpenCV
+		e. OpenCV (http://urbanhonking.com/ideasfordozens/2013/07/10/announcing-opencv-for-processing/)
+			When running on the Mac, make sure you have Processing set to 64-bit mode in the Preferences.
 
 3. Modify the config file setting under the directory *"data/"*
 		
