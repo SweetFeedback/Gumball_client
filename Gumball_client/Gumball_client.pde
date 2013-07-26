@@ -603,17 +603,20 @@ void askIfICanGetFeedback() {
           if(candySound[1]) askForSound(mPort);
         }else if(type.equals("saying")) {
           if(application_id == 9){
-            speak("oh");
+            String voice = getPostiveVoice();
+            speak(voice);
           }
           else if(application_id == 10){
             askForNegative(mPort);
-            speak("ummm");
+            String voice = getNegativeVoice();
+            speak(voice);
           }
         } else {
           println("ask negative");
           //if(candySound[1])
           askForNegative(mPort);
-          speak("ummm");
+          String voice = getNegativeVoice();
+          speak(voice);
         }
         loadStrings(URL_updateFeedback + "?feedback_id=" + target_feedback.getInt("feedback_id"));
         delay(1000);
@@ -693,4 +696,16 @@ private String getSettingFromConfigFile(String fileName) {
  ***/
 private void speak(String content) {
   tts.speak(content);
+}
+
+private String getPostiveVoice() {
+  String[] voices = {"Good", "Great", "Ya"};
+  int index = (int)random(voices.length);
+  return voices[index];
+}
+
+private String getNegativeVoice() {
+  String[] voices = {"NO", "Uh", "Come on", "Oh"};
+  int index = (int)random(voices.length);
+  return voices[index];
 }
