@@ -33,7 +33,8 @@ private boolean[] candySound = new boolean[]{true, false};
 private boolean silentFlag = false;
 private int bootError = 0; // 0: ok, 1: open port error, 2: server string error
 
-int WIDTH = 720;
+
+int WIDTH = 400;
 int HEIGHT = 200;
 int FULL_WIDTH = 370;
 int FULL_HEIGTH = 480;
@@ -49,6 +50,10 @@ AudioPlayer player;
 ControlP5 cp5;
 CheckBox checkbox1, checkbox2;
 
+Button settingDoneBtn;
+DropdownList deviceDropDownList;
+Textfield hostTextfield;
+Boolean isSettingDone = false;
 
 private TTS tts; // Text to speech object
 
@@ -64,21 +69,12 @@ void setup() {
   metaBold = loadFont("SansSerif-48.vlw");
   Font01 = loadFont("SansSerif-48.vlw");
   textFont(metaBold, 24);
-  frameRate(1);
+  frameRate(5);
   //frameRate(GLOBAL_FRAMERATE_FOR_GUMBALL_MACHINE);
   
-  getSettings();
-  portOpen(mPortName);
-  if(mPort == null|| mPort.output == null){
-    bootError = 1;
-    println("Port Unavailable");
-  }
-  if(bootError == 0 && loadStrings(mHostName) == null){
-    bootError = 2;
-    println("Server Unavailable");
-  }
+  //getSettings();
   
-  setupControlElement();
+  setupSettingControlElement();
   
   minim = new Minim (this);
   player = minim.loadFile ("../audio/wind.wav");
@@ -90,9 +86,12 @@ void setup() {
 void draw() {
   background(128);
   
-  setMessageText();
   
-  handleSensorData();
+  if(isSettingDone) {
+    setMessageText();
+    handleSensorData();
+  }
+
 }
 
 void handleSensorData() {
@@ -124,33 +123,6 @@ void handleSensorData() {
   }
 }
 
-void setMessageText() {
-  if(bootError > 0){
-    switch(bootError){
-      case 1:
-        text("Cannot open port: ", 10, HEIGHT/4 - 20);
-        text(mPortName, 10, HEIGHT/4 + 10);
-        break;
-      case 2:
-        text("Cannot connect server: ", 10, HEIGHT/4 - 20);
-        text(mHostName, 10, HEIGHT/4 + 10, 300, 24);
-        break;
-      default:
-        text("Unknown boot error", 10, HEIGHT/4 - 20);
-        break;
-    }
-  }else{
-    text("Sensor Data:", 10, HEIGHT/4 - 20);
-    text("S(dB), Li, T, IR, Win", 10, HEIGHT/4+10);
-    if (inBuffer != null) {
-      text(inBuffer, 8, height/2 - 10);      
-    }
-    if(!silentFlag) {
-      askIfICanGetFeedback();
-    }
-  }
-}
-
 void stop() {
   // always close Minim audio classes when you are done with them
   player.pause();
@@ -158,15 +130,53 @@ void stop() {
   super.stop();
 }
 
-
 void dispose() {
-  mPort.clear();
-  mPort.stop();
+  if(mPort != null) {
+    mPort.clear();
+    mPort.stop();
+  }
   super.dispose();
 }
 
-void setupControlElement() {
+void setupSettingControlElement() {
   cp5 = new ControlP5(this);
+  
+  deviceDropDownList = cp5.addDropdownList("device-port")
+    .setPosition(10, 90)
+    .setSize(200, 200)
+    ;
+  deviceDropDownList.addItems(Serial.list());
+  deviceDropDownList.setIndex(0);
+  
+  settingDoneBtn = cp5.addButton("OK")
+     .setPosition(150, 150)
+     .setSize(60,20)
+     ;
+  hostTextfield = cp5.addTextfield("Host")
+    .setPosition(10, 10)
+    .setText("http://209.129.244.24:1234/")
+    .setFocus(true);
+  
+}
+
+void OK() {
+  int deviceIdx = (int)deviceDropDownList.getValue();
+  String portName = Serial.list()[deviceIdx];
+  String hostName = hostTextfield.getText();
+  settingDoneBtn.remove();
+  deviceDropDownList.remove();
+  hostTextfield.remove();
+  
+  setupControlElement();
+  
+  getSettings(portName, hostName);
+  println(portName + " " + hostName);
+  
+  isSettingDone = true;
+}
+
+void setupControlElement() {
+  //cp5 = new ControlP5(this);
   /*checkbox1 = cp5.addCheckBox("checkBox1").setPosition(10, HEIGHT/2+20)
   .setColorForeground(color(120))
   .setColorActive(color(255))
@@ -216,6 +226,14 @@ void setupControlElement() {
 void controlEvent(ControlEvent theEvent) {
   CheckBox checkbox;
   
+  // drop down list
+  if(theEvent.isGroup()) {
+    int index = (int)theEvent.getGroup().getValue();
+    if(index >= 0 && index < Serial.list().length) {
+      println(Serial.list()[index]);
+    }
+  }
+  
   if (theEvent.isFrom(checkbox1)) {
     checkbox = checkbox1;
     if(silentFlag){
@@ -242,15 +260,46 @@ void controlEvent(ControlEvent theEvent) {
   }
 }
 
+
+void setMessageText() {
+  if(bootError > 0){
+    switch(bootError){
+      case 1:
+        text("Cannot open port: ", 10, HEIGHT/4 - 20);
+        text(mPortName, 10, HEIGHT/4 + 10);
+        break;
+      case 2:
+        text("Cannot connect server: ", 10, HEIGHT/4 - 20);
+        text(mHostName, 10, HEIGHT/4 + 10, 300, 24);
+        break;
+      default:
+        text("Unknown boot error", 10, HEIGHT/4 - 20);
+        break;
+    }
+  }else{
+    text("Sensor Data:", 10, HEIGHT/4 - 20);
+    text("S(dB), Li, T, IR, Win", 10, HEIGHT/4+10);
+    if (inBuffer != null) {
+      text(inBuffer, 8, height/2 - 10);      
+    }
+    if(!silentFlag) {
+      askIfICanGetFeedback();
+    }
+  }
+}
+
+
 /***
  Functions related to port 
  ***/
 private void portOpen(String name) {
   if (name != "") {
     mPort = new Serial(this, name, 9600);
+    /*
     mPort.clear();
     // read bytes into a buffer until you get a linefeed (ASCII 10):
     mPort.bufferUntil('\n');
+    */
   }
 }
 private void askForCandy(Serial port) {
@@ -271,6 +320,11 @@ private void askForNegative(Serial port) {
 private void askForSound(Serial port) {
   if (port != null) {
     port.write('D');
+  }
+}
+private void askForDeviceId(Serial port) {
+  if (port != null) {
+    port.write('E');
   }
 }
 void GiveCandy(int theValue) {
@@ -442,12 +496,28 @@ void askIfICanGetFeedback() {
 /***
  Functions related to config file 
  ***/
-private void getSettings() {  
+private void getSettings(String portName, String hostName) {
+  println("setting");
   processing.data.XML xml;
   xml = loadXML(dataPath("config.xml"));
-  mPortName = xml.getChild("port").getContent();
   mDeviceId = xml.getChild("device_id").getIntContent();
-  mHostName = xml.getChild("host").getContent();
+  
+  mPortName = portName;
+  mHostName = hostName;
+  //mPortName = xml.getChild("port").getContent();
+  //mHostName = xml.getChild("host").getContent();
+  
+  portOpen(mPortName);
+  if(mPort == null|| mPort.output == null){
+    bootError = 1;
+    println("Port Unavailable");
+  }
+  /*
+  if(bootError == 0 && loadStrings(mHostName) == null){
+    bootError = 2;
+    println("Server Unavailable");
+  }
+  */
   
   URL = mHostName + URL;
   URL_window = mHostName + URL_window;
@@ -455,6 +525,35 @@ private void getSettings() {
   URL_updateFeedback = mHostName + URL_updateFeedback;
   URL_updateBlueTooth = mHostName + URL_updateBlueTooth;
   URL_updatePeopleAround = mHostName + URL_updatePeopleAround;
+
+  String tmpBuffer = null;
+  while (true) {
+    println("delay");
+    delay(500);
+  //while (mPort.available() > 0) {
+    tmpBuffer = mPort.readStringUntil('\n');
+    if (tmpBuffer == null) {
+      continue;
+    }
+    print("establishContact: ");
+    print(tmpBuffer);
+    if(!tmpBuffer.startsWith("deviceID:")) {
+      print("continue");
+      delay(500);
+      continue;
+    }
+    
+    if (tmpBuffer == null) {
+      continue;
+    }
+    String[] tokens = tmpBuffer.split(":");
+    println(tokens[1].trim());
+    mDeviceId = Integer.parseInt(tokens[1].trim());
+    print("deviceid: " );
+    println(mDeviceId);
+    break;
+  }
+  askForSensorData(mPort);
 }
 
 private String getSettingFromConfigFile(String fileName) {
@@ -468,7 +567,7 @@ private String getSettingFromConfigFile(String fileName) {
   //println("config port is " + name);
   return name;
 }
- 
+
  
 /***
  Text to Speech
