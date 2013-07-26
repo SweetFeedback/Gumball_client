@@ -68,7 +68,7 @@ void setup() {
   metaBold = loadFont("SansSerif-48.vlw");
   Font01 = loadFont("SansSerif-48.vlw");
   textFont(metaBold, 24);
-  //frameRate(1);
+  frameRate(5);
   //frameRate(GLOBAL_FRAMERATE_FOR_GUMBALL_MACHINE);
   
   //getSettings();
@@ -128,8 +128,10 @@ void stop() {
 }
 
 void dispose() {
-  mPort.clear();
-  mPort.stop();
+  if(mPort != null) {
+    mPort.clear();
+    mPort.stop();
+  }
   super.dispose();
 }
 
@@ -159,15 +161,15 @@ void OK() {
   int deviceIdx = (int)deviceDropDownList.getValue();
   String portName = Serial.list()[deviceIdx];
   String hostName = hostTextfield.getText();
-  getSettings(portName, hostName);
-  println(portName + " " + hostName);
-  
   settingDoneBtn.remove();
   deviceDropDownList.remove();
   hostTextfield.remove();
   
-  
   setupControlElement();
+  
+  getSettings(portName, hostName);
+  println(portName + " " + hostName);
+  
   isSettingDone = true;
 }
 
@@ -292,9 +294,11 @@ void setMessageText() {
 private void portOpen(String name) {
   if (name != "") {
     mPort = new Serial(this, name, 9600);
+    /*
     mPort.clear();
     // read bytes into a buffer until you get a linefeed (ASCII 10):
     mPort.bufferUntil('\n');
+    */
   }
 }
 private void askForCandy(Serial port) {
@@ -315,6 +319,11 @@ private void askForNegative(Serial port) {
 private void askForSound(Serial port) {
   if (port != null) {
     port.write('D');
+  }
+}
+private void askForDeviceId(Serial port) {
+  if (port != null) {
+    port.write('E');
   }
 }
 void GiveCandy(int theValue) {
@@ -487,6 +496,7 @@ void askIfICanGetFeedback() {
  Functions related to config file 
  ***/
 private void getSettings(String portName, String hostName) {
+  println("setting");
   processing.data.XML xml;
   xml = loadXML(dataPath("config.xml"));
   mDeviceId = xml.getChild("device_id").getIntContent();
@@ -501,10 +511,12 @@ private void getSettings(String portName, String hostName) {
     bootError = 1;
     println("Port Unavailable");
   }
+  /*
   if(bootError == 0 && loadStrings(mHostName) == null){
     bootError = 2;
     println("Server Unavailable");
   }
+  */
   
   URL = mHostName + URL;
   URL_window = mHostName + URL_window;
@@ -512,6 +524,35 @@ private void getSettings(String portName, String hostName) {
   URL_updateFeedback = mHostName + URL_updateFeedback;
   URL_updateBlueTooth = mHostName + URL_updateBlueTooth;
   URL_updatePeopleAround = mHostName + URL_updatePeopleAround;
+
+  String tmpBuffer = null;
+  while (true) {
+    println("delay");
+    delay(500);
+  //while (mPort.available() > 0) {
+    tmpBuffer = mPort.readStringUntil('\n');
+    if (tmpBuffer == null) {
+      continue;
+    }
+    print("establishContact: ");
+    print(tmpBuffer);
+    if(!tmpBuffer.startsWith("deviceID:")) {
+      print("continue");
+      delay(500);
+      continue;
+    }
+    
+    if (tmpBuffer == null) {
+      continue;
+    }
+    String[] tokens = tmpBuffer.split(":");
+    println(tokens[1].trim());
+    mDeviceId = Integer.parseInt(tokens[1].trim());
+    print("deviceid: " );
+    println(mDeviceId);
+    break;
+  }
+  askForSensorData(mPort);
 }
 
 private String getSettingFromConfigFile(String fileName) {
