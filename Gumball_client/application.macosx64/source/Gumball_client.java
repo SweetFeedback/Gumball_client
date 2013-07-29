@@ -189,7 +189,7 @@ public void setupSettingControlElement() {
   hostTextfield = cp5.addTextfield("Host")
     .setPosition(125, 90)
     .setSize(150, 10)
-    .setText("http://209.129.244.24:1234/")
+    .setText("http://209.129.244.24:5566/")
     .setFocus(true);
   
 }
