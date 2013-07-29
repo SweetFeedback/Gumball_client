@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<config>
+	<port>/dev/tty.usbmodem1411</port>
+	<device_id>0</device_id>
+	<host>http://209.129.244.24:1234/</host>
+</config>

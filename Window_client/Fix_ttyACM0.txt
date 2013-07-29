@@ -1,2 +1,0 @@
--java  -Djava.library.path="$APPDIR" -cp "$APPDIR/lib/client_app_input.jar:$APPDIR/lib/core.jar:$APPDIR/lib/RXTXcomm.jar:$APPDIR/lib/serial.jar" client_app_input
-+java -Dgnu.io.rxtx.SerialPorts=`head -n 1 ./data/config.txt` -Djava.library.path="$APPDIR" -cp "$APPDIR/lib/client_app_input.jar:$APPDIR/lib/core.jar:$APPDIR/lib/RXTXcomm.jar:$APPDIR/lib/serial.jar" client_app_input
