@@ -148,18 +148,18 @@ void setupSettingControlElement() {
   cp5 = new ControlP5(this);
   
   deviceDropDownList = cp5.addDropdownList("device-port")
-    .setPosition(10, 90)
-    .setSize(200, 200)
+    .setPosition(125, 20)
+    .setSize(150, 50)
     ;
   deviceDropDownList.addItems(Serial.list());
-  deviceDropDownList.setIndex(0);
   
   settingDoneBtn = cp5.addButton("OK")
      .setPosition(150, 150)
      .setSize(60,20)
      ;
   hostTextfield = cp5.addTextfield("Host")
-    .setPosition(10, 10)
+    .setPosition(125, 90)
+    .setSize(150, 10)
     .setText("http://209.129.244.24:1234/")
     .setFocus(true);
   
