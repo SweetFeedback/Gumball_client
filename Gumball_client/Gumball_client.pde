@@ -42,6 +42,8 @@ int TEXT_HEIGHT = HEIGHT/2+40;
 int margin_width = 10;
 int margin_height = TEXT_HEIGHT + 10;
 int cnt = 0;
+int FRAME_RATE = 5;
+int uploadSensorCounter = 0;
 
 PFont Font01;
 PFont metaBold;
@@ -69,7 +71,7 @@ void setup() {
   metaBold = loadFont("SansSerif-48.vlw");
   Font01 = loadFont("SansSerif-48.vlw");
   textFont(metaBold, 24);
-  frameRate(5);
+  frameRate(FRAME_RATE);
   //frameRate(GLOBAL_FRAMERATE_FOR_GUMBALL_MACHINE);
   
   //getSettings();
@@ -89,7 +91,11 @@ void draw() {
   
   if(isSettingDone) {
     setMessageText();
-    handleSensorData();
+    if(uploadSensorCounter % (3 * FRAME_RATE) == 0) {
+      handleSensorData();
+      uploadSensorCounter = 0;
+    }
+    uploadSensorCounter++;
   }
 
 }
