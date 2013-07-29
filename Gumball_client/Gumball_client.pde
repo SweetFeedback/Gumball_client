@@ -283,10 +283,11 @@ void setMessageText() {
         break;
     }
   }else{
-    text("Sensor Data:", 10, HEIGHT/4 - 20);
-    text("S(dB), Li, T, IR, Win", 10, HEIGHT/4+10);
+    text("Device ID: " + mDeviceId, 10, HEIGHT/4 - 25); 
+    text("Sensor Data:", 10, HEIGHT/4);
+    text("S(dB), Li, T, IR, Win", 10, HEIGHT/4 + 25);
     if (inBuffer != null) {
-      text(inBuffer, 8, height/2 - 10);      
+      text(inBuffer, 8, height/2);      
     }
     if(!silentFlag) {
       askIfICanGetFeedback();
