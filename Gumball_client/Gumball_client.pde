@@ -603,7 +603,8 @@ void askIfICanGetFeedback() {
           if(candySound[1]) askForSound(mPort);
         }else if(type.equals("saying")) {
           if(application_id == 9){
-            String voice = getPostiveVoice();
+            askForSound(mPort);
+            String voice = getPositiveVoice();
             speak(voice);
           }
           else if(application_id == 10){
@@ -698,7 +699,7 @@ private void speak(String content) {
   tts.speak(content);
 }
 
-private String getPostiveVoice() {
+private String getPositiveVoice() {
   String[] voices = {"Good", "Great", "Ya"};
   int index = (int)random(voices.length);
   return voices[index];
