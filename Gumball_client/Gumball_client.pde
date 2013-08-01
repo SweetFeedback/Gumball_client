@@ -513,23 +513,22 @@ private String getInsertServerDatabaseURL(String input) {
 
 
 void uploadPeopleAroundAndGetProblem(int peopleNum) {
-  String url = URL_updatePeopleAround;
+  String url = URL_updatePeopleAround + "?device_id=" + mDeviceId + "&people_count=" + peopleNum;
+  println(url);
   String[] lines = loadStrings(url);
   if(lines != null) {
     String rawResults = join(lines, "");
     println(rawResults);
     try{
       org.json.JSONObject resultObject = new org.json.JSONObject(rawResults);
-      
       org.json.JSONObject problemJsonObject = resultObject.getJSONObject("problem");
       println(problemJsonObject);
       
-      String description = problemJsonObject.getString("problem_description");
-      String location = problemJsonObject.getString("location");
-      println(description);
+      String description = problemJsonObject.getString("problem_desc");
       delay(1000);
-      
-      speak(description);
+      if(description != null) {
+        speak("Hey I saw you");
+      }
     } catch(Exception e) {
       println(e);
     }
