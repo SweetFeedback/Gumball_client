@@ -11,7 +11,10 @@ import gab.opencv.*;
 import java.awt.Rectangle;
 import java.awt.Frame;
 
-private static final float GLOBAL_FRAMERATE_FOR_GUMBALL_MACHINE = 60;
+//private static final float GLOBAL_FRAMERATE_FOR_GUMBALL_MACHINE = 60;
+private static final int FRAME_RATE = 5;
+private static final int SECOND_PER_SERVER_CONNECTION = 3;
+int frame_counter = 0;
 private static final int DELAY_GIVE_FEEDBACK = 20;
 
 private static boolean DEBUG = true;
@@ -77,7 +80,7 @@ void setup() {
   metaBold = loadFont("SansSerif-48.vlw");
   Font01 = loadFont("SansSerif-48.vlw");
   textFont(metaBold, 24);
-  frameRate(5);
+  frameRate(frameRate);
   //frameRate(GLOBAL_FRAMERATE_FOR_GUMBALL_MACHINE);
   
   //getSettings();
@@ -118,16 +121,17 @@ void draw() {
   background(128);
   
   if(isSettingDone) {
-    setMessageText();
-    handleSensorData();
-    faceDetection();
-  
-    cnt++;
-    if(cnt % 10 == 0) {
+    if(frame_counter % (SECOND_PER_SERVER_CONNECTION * FRAME_RATE) == 0) {
+      setMessageText();
+      handleSensorData();
+    
+    
+      faceDetection();
       if(faces.length > 0) {
-      } else {
         uploadPeopleAroundAndGetProblem(faces.length);
       }
+      
+      frame_counter = 0; // prevent overflow
     }
     
 //  bluetoothTimer++;
@@ -137,7 +141,7 @@ void draw() {
 //  }
   }
   
-  
+  frame_counter++;
 }
 
 void handleSensorData() {
