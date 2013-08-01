@@ -1,0 +1,3 @@
+
+Gumball_client
+Gumball_client.jar,core.jar,jogl-all.jar,gluegen-rt.jar,jogl-all-natives-windows-i586.jar,gluegen-rt-natives-windows-i586.jar,RXTXcomm.jar,serial.jar,gstreamer-java.jar,jna.jar,video.jar,json4processing.jar,controlP5.jar,jl1.0.jar,jsminim.jar,minim.jar,mp3spi1.9.4.jar,tritonus_aos.jar,tritonus_share.jar,cmu_time_awb.jar,cmu_us_kal.jar,cmudict04.jar,cmulex.jar,cmutimelex.jar,en_us.jar,freetts.jar,mbrola.jar,ttslib.jar,bluetoothDesktop.jar,bluecove-2.0.2-snapshot.jar,opencv-245.jar,opencv_processing.jar
