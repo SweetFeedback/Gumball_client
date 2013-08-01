@@ -463,18 +463,25 @@ private String getInsertServerDatabaseURL(String input) {
 void uploadPeopleAroundAndGetProblem(int peopleNum) {
   String url = URL_updatePeopleAround;
   String[] lines = loadStrings(url);
-  
-  String rawResults = join(lines, "");
-  org.json.JSONObject resultObject = new org.json.JSONObject(rawResults);
-  org.json.JSONObject problemJsonObject = resultObject.getJSONObject("problem");
-  println(problemJsonObject);
-  
-  String description = problemJsonObject.getString("problem_description");
-  String location = problemJsonObject.getString("location");
-  println(description);
-  delay(1000);
-  
-  speak(description);
+  if(lines != null) {
+    String rawResults = join(lines, "");
+    println(rawResults);
+    try{
+      org.json.JSONObject resultObject = new org.json.JSONObject(rawResults);
+      
+      org.json.JSONObject problemJsonObject = resultObject.getJSONObject("problem");
+      println(problemJsonObject);
+      
+      String description = problemJsonObject.getString("problem_description");
+      String location = problemJsonObject.getString("location");
+      println(description);
+      delay(1000);
+      
+      speak(description);
+    } catch(org.json.JSONException e) {
+      println(e);
+    }
+  }
   
 
 }
