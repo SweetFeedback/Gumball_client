@@ -15,6 +15,7 @@ import java.awt.Frame;
 private static final int FRAME_RATE = 5;
 private static final int SECOND_PER_UPLOAD_SENSOR = 5;
 private static final int SECOND_PER_FACEDETECTION = 1;
+private static final int SECOND_PER_ASK_FEEDBACK = 1;
 int frame_counter = 0;
 boolean spoken_flag = false;
 int zero_faces_count = 0;
@@ -129,6 +130,11 @@ void draw() {
       handleSensorData();
     }
     
+    if(frame_counter % (SECOND_PER_ASK_FEEDBACK * FRAME_RATE) == 0) {
+      println("ASK FEEEDBACK");
+      askIfICanGetFeedback();
+    }
+    
     if(frame_counter % (SECOND_PER_FACEDETECTION * FRAME_RATE) == 0) {
       faceDetection();
       if(faces.length > 0) {
@@ -136,7 +142,7 @@ void draw() {
       } else {
         zero_faces_count++;
         
-        if(zero_faces_count > 5) {
+        if(zero_faces_count > 10) {
           println("reset spoken_flag");
           spoken_flag = false;
           zero_faces_count = 0;
@@ -366,7 +372,7 @@ void setMessageText() {
       text(inBuffer, 8, height/2 - 10);      
     }
     if(!silentFlag) {
-      askIfICanGetFeedback();
+      //askIfICanGetFeedback();
     }
   }
 }
@@ -700,7 +706,7 @@ private String getPositiveVoice() {
 }
 
 private String getNegativeVoice() {
-  String[] voices = {"NO", "Uh", "Come on", "Oh"};
+  String[] voices = {"NO", "Uh", "Come on"};
   int index = (int)random(voices.length);
   return voices[index];
 }
