@@ -478,7 +478,7 @@ void uploadPeopleAroundAndGetProblem(int peopleNum) {
       delay(1000);
       
       speak(description);
-    } catch(org.json.JSONException e) {
+    } catch(Exception e) {
       println(e);
     }
   }
