@@ -1,7 +1,2 @@
 data/config.xml
 .DB_Store
-application.linux32/
-application.linux64/
-application.macosx32/
-application.macosx64/
-application.windows32/
