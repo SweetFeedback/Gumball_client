@@ -13,8 +13,11 @@ import java.awt.Frame;
 
 //private static final float GLOBAL_FRAMERATE_FOR_GUMBALL_MACHINE = 60;
 private static final int FRAME_RATE = 5;
-private static final int SECOND_PER_SERVER_CONNECTION = 3;
+private static final int SECOND_PER_UPLOAD_SENSOR = 5;
+private static final int SECOND_PER_FACEDETECTION = 1;
 int frame_counter = 0;
+boolean spoken_flag = false;
+int zero_faces_count = 0;
 private static final int DELAY_GIVE_FEEDBACK = 20;
 
 private static boolean DEBUG = true;
@@ -121,16 +124,29 @@ void draw() {
   background(128);
   
   if(isSettingDone) {
-    if(frame_counter % (SECOND_PER_SERVER_CONNECTION * FRAME_RATE) == 0) {
+    if(frame_counter % (SECOND_PER_UPLOAD_SENSOR * FRAME_RATE) == 0) {
       setMessageText();
       handleSensorData();
+    }
     
-    
+    if(frame_counter % (SECOND_PER_FACEDETECTION * FRAME_RATE) == 0) {
       faceDetection();
       if(faces.length > 0) {
         uploadPeopleAroundAndGetProblem(faces.length);
+      } else {
+        zero_faces_count++;
+        
+        if(zero_faces_count > 5) {
+          println("reset spoken_flag");
+          spoken_flag = false;
+          zero_faces_count = 0;
+        }
       }
       
+      
+    }
+    
+    if(frame_counter > 10000) {
       frame_counter = 0; // prevent overflow
     }
     
@@ -514,7 +530,6 @@ private String getInsertServerDatabaseURL(String input) {
 
 void uploadPeopleAroundAndGetProblem(int peopleNum) {
   String url = URL_updatePeopleAround + "?device_id=" + mDeviceId + "&people_count=" + peopleNum;
-  println(url);
   String[] lines = loadStrings(url);
   if(lines != null) {
     String rawResults = join(lines, "");
@@ -522,12 +537,12 @@ void uploadPeopleAroundAndGetProblem(int peopleNum) {
     try{
       org.json.JSONObject resultObject = new org.json.JSONObject(rawResults);
       org.json.JSONObject problemJsonObject = resultObject.getJSONObject("problem");
-      println(problemJsonObject);
       
       String description = problemJsonObject.getString("problem_desc");
-      delay(1000);
-      if(description != null) {
-        speak("Hey I saw you");
+      //delay(1000);
+      if(description != null && spoken_flag == false) {
+        spoken_flag = true;
+        speak("Hey! I saw you");
       }
     } catch(Exception e) {
       println(e);
