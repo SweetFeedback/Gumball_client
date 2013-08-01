@@ -58,67 +58,7 @@ CheckBox checkbox1, checkbox2;
 int bluetoothTimer = 0;
 Device[] devices = new Device[0];
 
-
 private TTS tts; // Text to speech object
-
-PFrame problemFrame;
-SecondApplet secondApplet;
-
-public class PFrame extends Frame {
-    public PFrame() {
-        setBounds(400, 300, 600, 300);
-        setResizable(false);
-        secondApplet = new SecondApplet();
-        add(secondApplet);
-        secondApplet.init();
-        show();
-    }
-}
-public class SecondApplet extends PApplet {
-  
-  Frame f;
-  private String mLocation;
-  private String mDescription;
-  
-  public void setup() {
-    size(600, 300);
-    noLoop();
-    textFont(metaBold, 24);
-    textSize(20);
-    mLocation = "";
-    mDescription = "";
-    
-  }
-  
-  public void draw() {
-    background(120);
-    text("Location: " + mLocation, 30, 50);
-    text(mDescription, 30, 100);
-  }
-  
-  public void setFrame(Frame f) {
-    this.f = f;
-    f.setVisible(false);
-  }
-  
-  public void setText(String location, String content) {
-    mLocation = location;
-    mDescription = content;
-  }
-  
-  void controlEvent(ControlEvent theEvent) {
-    if (theEvent.isController()) {
-      String name = theEvent.controller().name();
-      if (name == "OK") {
-        println("click");
-        f.setVisible(false);
-      } else if(name == "NO") {
-        println("NO");
-        f.setVisible(false);
-      }
-    }
-  }
-}
 
 /***
  Main Functions
@@ -172,29 +112,6 @@ void setup() {
   
   // Start capturing the images from the camera
   video.start();
-  
-  CreateNewWindow();
-  
-  
-}
-
-void CreateNewWindow() {
-  problemFrame = new PFrame();
-  
-  // to controll frame visiable
-  secondApplet.setFrame(problemFrame);
-    
-  ControlP5 cp5 = new ControlP5(secondApplet);
-  cp5.addButton("OK")
-     .setPosition(100, 150)
-     .setSize(60,20)
-     ;
-     
-  cp5.addButton("NO")
-     .setPosition(200, 150)
-     .setSize(60,20)
-     ;
-  
 }
 
 void captureEvent(Capture c) {
@@ -219,13 +136,11 @@ void draw() {
   
   cnt++;
   if(cnt % 10 == 0) {
-    if(problemFrame.isVisible() && faces.length > 0) {
+    if(faces.length > 0) {
     } else {
       uploadPeopleAroundAndGetProblem(faces.length);
     }
   }
-  secondApplet.redraw();
-  
 }
 
 void handleSensorData() {
@@ -557,20 +472,12 @@ void uploadPeopleAroundAndGetProblem(int peopleNum) {
   String description = problemJsonObject.getString("problem_description");
   String location = problemJsonObject.getString("location");
   println(description);
-  secondApplet.setText(location, description);
   delay(1000);
   
   speak(description);
   
-  problemFrame.setVisible(true);
 
 }
-
-void reportProblemSolved(int problemId) {
-  
-}
-
-
 
 
 void askIfICanGetFeedback() {
