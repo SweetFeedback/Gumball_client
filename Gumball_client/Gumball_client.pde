@@ -543,12 +543,13 @@ void uploadPeopleAroundAndGetProblem(int peopleNum) {
     try{
       org.json.JSONObject resultObject = new org.json.JSONObject(rawResults);
       org.json.JSONObject problemJsonObject = resultObject.getJSONObject("problem");
+      println(problemJsonObject);
       
       String description = problemJsonObject.getString("problem_desc");
       //delay(1000);
       if(description != null && spoken_flag == false) {
         spoken_flag = true;
-        speak("Hey! I saw you");
+        speak("Save energy get reward");
       }
     } catch(Exception e) {
       println(e);
