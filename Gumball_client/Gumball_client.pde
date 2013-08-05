@@ -696,7 +696,11 @@ private String getSettingFromConfigFile(String fileName) {
  Text to Speech
  ***/
 private void speak(String content) {
-  tts.speak(content);
+  String[] params = {"say", content};
+  exec(params);
+  println(params);
+  delay(1000);
+  //tts.speak(content);
 }
 
 private String getPositiveVoice() {
