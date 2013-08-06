@@ -48,7 +48,7 @@ int TEXT_HEIGHT = HEIGHT/2+40;
 int margin_width = 10;
 int margin_height = TEXT_HEIGHT + 10;
 int cnt = 0;
-
+int faces_count = 0;
 PFont Font01;
 PFont metaBold;
 Minim minim;
@@ -137,12 +137,20 @@ void draw() {
     
     if(frame_counter % (SECOND_PER_FACEDETECTION * FRAME_RATE) == 0) {
       faceDetection();
-      if(faces.length > 0) {
-        uploadPeopleAroundAndGetProblem(faces.length);
-      } else {
+      if(faces.length > 0 && spoken_flag == false) {
+        faces_count++;
+        if(faces_count > 3) {
+          zero_faces_count = 0;
+          uploadPeopleAroundAndGetProblem(faces.length);
+          faces_count = 0;
+        }
+      } else if(faces.length > 0) {
+        zero_faces_count = 0;
+      } else if(faces.length == 0) {
+        faces_count = 0;
         zero_faces_count++;
         
-        if(zero_faces_count > 10) {
+        if(zero_faces_count > 30) {
           println("reset spoken_flag");
           spoken_flag = false;
           zero_faces_count = 0;
@@ -535,6 +543,11 @@ private String getInsertServerDatabaseURL(String input) {
 
 
 void uploadPeopleAroundAndGetProblem(int peopleNum) {
+  if(spoken_flag == false) {
+    spoken_flag = true;
+    speak("Hey! I saw you");
+  }
+  /*
   String url = URL_updatePeopleAround + "?device_id=" + mDeviceId + "&people_count=" + peopleNum;
   String[] lines = loadStrings(url);
   if(lines != null) {
@@ -548,12 +561,12 @@ void uploadPeopleAroundAndGetProblem(int peopleNum) {
       //delay(1000);
       if(description != null && spoken_flag == false) {
         spoken_flag = true;
-        speak("Hey! I saw you");
       }
     } catch(Exception e) {
       println(e);
     }
   }
+  */
   
 
 }
