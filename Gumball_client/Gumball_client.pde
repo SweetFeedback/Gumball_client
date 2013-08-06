@@ -621,11 +621,6 @@ void askIfICanGetFeedback() {
  Functions related to config file 
  ***/
 private void getSettings(String portName, String hostName) {
-  println("setting");
-  processing.data.XML xml;
-  xml = loadXML(dataPath("config.xml"));
-  mDeviceId = xml.getChild("device_id").getIntContent();
-  
   mPortName = portName;
   mHostName = hostName;
   //mPortName = xml.getChild("port").getContent();
