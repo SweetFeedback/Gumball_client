@@ -545,7 +545,7 @@ private String getInsertServerDatabaseURL(String input) {
 void uploadPeopleAroundAndGetProblem(int peopleNum) {
   if(spoken_flag == false) {
     spoken_flag = true;
-    speak("Hey! I saw you");
+    speak("Save energy get reward");
   }
   /*
   String url = URL_updatePeopleAround + "?device_id=" + mDeviceId + "&people_count=" + peopleNum;
@@ -556,17 +556,22 @@ void uploadPeopleAroundAndGetProblem(int peopleNum) {
     try{
       org.json.JSONObject resultObject = new org.json.JSONObject(rawResults);
       org.json.JSONObject problemJsonObject = resultObject.getJSONObject("problem");
+      println(problemJsonObject);
       
       String description = problemJsonObject.getString("problem_desc");
       //delay(1000);
       if(description != null && spoken_flag == false) {
         spoken_flag = true;
+
+        speak("Save energy get reward");
+
       }
     } catch(Exception e) {
       println(e);
     }
   }
   */
+  
   
 
 }
@@ -709,7 +714,11 @@ private String getSettingFromConfigFile(String fileName) {
  Text to Speech
  ***/
 private void speak(String content) {
-  tts.speak(content);
+  String[] params = {"say", content};
+  exec(params);
+  println(params);
+  delay(1000);
+  //tts.speak(content);
 }
 
 private String getPositiveVoice() {
