@@ -125,8 +125,9 @@ void draw() {
   background(128);
   
   if(isSettingDone) {
+    setMessageText();
+    
     if(frame_counter % (SECOND_PER_UPLOAD_SENSOR * FRAME_RATE) == 0) {
-      setMessageText();
       handleSensorData();
     }
     
@@ -137,27 +138,25 @@ void draw() {
     
     if(frame_counter % (SECOND_PER_FACEDETECTION * FRAME_RATE) == 0) {
       faceDetection();
-      if(faces.length > 0 && spoken_flag == false) {
+      
+      if(faces.length > 0) {
         faces_count++;
-        if(faces_count > 3) {
-          zero_faces_count = 0;
-          uploadPeopleAroundAndGetProblem(faces.length);
-          faces_count = 0;
-        }
-      } else if(faces.length > 0) {
         zero_faces_count = 0;
+        if(faces_count > 3 && spoken_flag == false) {
+          spoken_flag = true;
+          uploadPeopleAroundAndGetProblem(faces.length);
+        }
       } else if(faces.length == 0) {
-        faces_count = 0;
         zero_faces_count++;
         
-        if(zero_faces_count > 30) {
+        // reset if no one appear in 15 frames
+        if(zero_faces_count > 15) {
           println("reset spoken_flag");
           spoken_flag = false;
           zero_faces_count = 0;
+          faces_count = 0;
         }
       }
-      
-      
     }
     
     if(frame_counter > 10000) {
@@ -540,13 +539,11 @@ private String getInsertServerDatabaseURL(String input) {
 
 
 void uploadPeopleAroundAndGetProblem(int peopleNum) {
-  if(spoken_flag == false) {
-    spoken_flag = true;
-    speak("Save energy get reward");
-  }
-  /*
+  speak("Save energy get reward");
+  
   String url = URL_updatePeopleAround + "?device_id=" + mDeviceId + "&people_count=" + peopleNum;
   String[] lines = loadStrings(url);
+  /*
   if(lines != null) {
     String rawResults = join(lines, "");
     println(rawResults);
@@ -568,9 +565,6 @@ void uploadPeopleAroundAndGetProblem(int peopleNum) {
     }
   }
   */
-  
-  
-
 }
 
 
@@ -708,7 +702,6 @@ private String getSettingFromConfigFile(String fileName) {
 private void speak(String content) {
   String[] params = {"say", content};
   exec(params);
-  println(params);
   delay(1000);
   //tts.speak(content);
 }
