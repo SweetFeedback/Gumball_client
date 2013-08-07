@@ -371,9 +371,6 @@ void setMessageText() {
     if (inBuffer != null) {
       text(inBuffer, 8, height/2 - 10);      
     }
-    if(!silentFlag) {
-      //askIfICanGetFeedback();
-    }
   }
 }
 
