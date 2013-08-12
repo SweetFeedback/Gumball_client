@@ -534,14 +534,9 @@ public void askIfICanGetFeedback() {
  ***/
 private void getSettings(String portName, String hostName) {
   println("setting");
-  processing.data.XML xml;
-  xml = loadXML(dataPath("config.xml"));
-  mDeviceId = xml.getChild("device_id").getIntContent();
   
   mPortName = portName;
   mHostName = hostName;
-  //mPortName = xml.getChild("port").getContent();
-  //mHostName = xml.getChild("host").getContent();
   
   portOpen(mPortName);
   if(mPort == null|| mPort.output == null){
