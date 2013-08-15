@@ -577,8 +577,9 @@ void askIfICanGetFeedback() {
       org.json.JSONObject resultObject = new org.json.JSONObject(rawResult);
       org.json.JSONArray feedbackArray = resultObject.getJSONArray("data");
       
-      if (feedbackArray.length() > 0) {
-        org.json.JSONObject target_feedback = feedbackArray.getJSONObject(0);
+      for(int i = 0; i < feedbackArray.length(); i++) {
+      //if (feedbackArray.length() > 0) {
+        org.json.JSONObject target_feedback = feedbackArray.getJSONObject(i);
         if(DEBUG) {
           println(target_feedback);
         }
