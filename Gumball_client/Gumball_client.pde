@@ -123,7 +123,6 @@ void captureEvent(Capture c) {
 
 void draw() {
   background(128);
-  
   if(isSettingDone) {
     setMessageText();
     
@@ -162,12 +161,6 @@ void draw() {
     if(frame_counter > 10000) {
       frame_counter = 0; // prevent overflow
     }
-    
-//  bluetoothTimer++;
-//  if(bluetoothTimer == 5) {
-//    bluetoothTimer = 0;
-//    bt.discover();
-//  }
   }
   
   frame_counter++;
@@ -458,49 +451,17 @@ void utterWindSound(boolean windowOpen){
 
 private boolean insertDataToServer(String input) {
   String url = getInsertServerDatabaseURL(input);
-  String url_window = getInsertWindowDatabaseURL(input);
+  //String url_window = getInsertWindowDatabaseURL(input);
   println(input);
   //println(url);
   //println(url_window);
   if (url != null && bootError == 0) {
     String[] lines = loadStrings(url);
   }
-  if (url_window != null && bootError == 0) {
-    String[] lines_window = loadStrings(url_window);
-  }
+  //if (url_window != null && bootError == 0) {
+  //  String[] lines_window = loadStrings(url_window);
+  //}
   return false;
-}
-
-private String getInsertWindowDatabaseURL(String input) {
-  String url = null; 
-  
-  if(input != null) {
-    String[] splited_data = input.split(",");
-    if (splited_data == null || splited_data[0].equals("0")) return null;
-    String sound, light, temp, people = null, window = null;
-    switch(splited_data.length){
-      case 5:
-        people = splited_data[3];
-        window = splited_data[4];
-      case 3:
-        sound = splited_data[0];
-        light = splited_data[1];
-        temp = splited_data[2];
-        break;
-      default:
-        return null;
-    }
-    StringBuilder sb = new StringBuilder();
-    sb.append(URL_window);
-    sb.append("?location_id=3");
-    sb.append("&device_id=");
-    sb.append(mDeviceId);
-    sb.append("&state=");
-    sb.append(window);
-    url = sb.toString();  
-  }
-
-  return url;
 }
 
 private String getInsertServerDatabaseURL(String input) {
@@ -531,6 +492,10 @@ private String getInsertServerDatabaseURL(String input) {
     sb.append(temp);
     sb.append("&light_level=");
     sb.append(light);
+    if(window != null){
+      sb.append("&window_state=");
+      sb.append(window);
+    }
 
     url = sb.toString();  
   }
